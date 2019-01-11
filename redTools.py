@@ -115,7 +115,7 @@ def faceON(table):
     index, = np.where(table0['flag']<3)
     table0 = trim(table0, index)
     
-    #### for test not face-n
+    #### for test not face-on
     ###index, = np.where(table['Sqlt']>3)
     ###table0 = trim(table, index)
 
