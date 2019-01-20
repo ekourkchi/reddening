@@ -1,6 +1,6 @@
-import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+#import sys
+#reload(sys)
+#sys.setdefaultencoding('utf8')
 
 import os
 import subprocess
@@ -16,7 +16,65 @@ import pylab as py
 from matplotlib import gridspec
 import copy 
 
+from Kcorrect import *
+################################################################# 
+def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
+    
+    inFile  = 'ESN_HI_catal.csv'
+    table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
 
+    table = extinctionCorrect(table)
+    table = Kcorrection(table)
+
+    if band2=='w1':
+        text1 = band1+'-W1'      # example: cr-W1
+        text2 = '$c21W_1$'       # example: c21w
+    else: 
+        text1 = band1+'-W2' 
+        text2 = '$c21W_2$'
+
+    delta = np.abs(table[band2]-table[band2+'_'])
+    index, = np.where(delta<=0.15)
+    table = trim(table, index)
+
+    delta = np.abs(table[band1]-table[band1+'_'])
+    index, = np.where(delta<=0.15)
+    table = trim(table, index)
+
+    table['c21w'] = table['m21'] - table[band2]
+    table['r_w1'] = table[band1] - table[band2]
+
+    table['Ec21w'] = np.sqrt(table['m21_e']**2+0.05**2)
+    table['Er_w1'] = 0.*table['r_w1']+0.1
+
+    index, = np.where(table['logWimx']>1)
+    table = trim(table, index)
+
+    index, = np.where(table['r_w1']<4)
+    table = trim(table, index)
+
+    index, = np.where(table['r_w1']>-5)
+    table = trim(table, index)
+
+    index, = np.where(table['Sqlt']>3)
+    table = trim(table, index)
+
+    index, = np.where(table['Wqlt']>3)
+    table = trim(table, index)
+    
+    if faceOn:
+        index, = np.where(table['flag']>0)
+        table = trim(table, index)
+
+        index, = np.where(table['flag']<3)
+        table = trim(table, index)
+
+    else: 
+
+        index, = np.where(table['flag']==0)
+        table = trim(table, index)
+    
+    return table
 ################################################################# 
 def Fdelta(B, X):
     
