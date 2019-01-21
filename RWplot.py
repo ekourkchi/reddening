@@ -63,40 +63,16 @@ inFile  = 'ESN_HI_catal.csv'
 band1 = 'r'
 band2 = 'w2'
 
-table = getTable(inFile, band1=band1, band2=band2, faceOn=False)
-
-pgc = table['pgc']
-logWimx = table['logWimx']
-logWimx_e = table['logWimx_e']
-inc = table['inc']
-r_w1 = table['r_w1']
-c21w = table['c21w'] 
-Er_w1 = table['Er_w1']
-Ec21w = table['Ec21w']
-
-C82  = table['C82_w2']   # concentration 80%/20%
-mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
-
-z_scaler = StandardScaler()
-
-data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
-n_comp = len(data)
-d = pd.DataFrame.from_dict(data)
-z_data = z_scaler.fit_transform(d)
-
-
-pca_trafo = PCA().fit(z_data)
-pca_data = pca_trafo.fit_transform(z_data)
-A = pca_trafo.explained_variance_ratio_                    # The importance of different PCAs components
-pca_inv_data = pca_trafo.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
-
-
-delta = pca_data[:,0]-(pca_inv_data[0,0]*z_data[:,0]+pca_inv_data[0,1]*z_data[:,1]+pca_inv_data[0,2]*z_data[:,2])
+## get transformations from non-Face-ON galaxies
+scaler, pca = transform(inFile, band1=band1, band2=band2)
 ################################
 
 
 #### Face ON
 table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
+index, = np.where(table['Wba']>0.01)
+table = trim(table, index)
+
 pgc = table['pgc']
 logWimx = table['logWimx']
 logWimx_e = table['logWimx_e']
@@ -112,13 +88,13 @@ mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(t
 print len(logWimx)
 data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
 d = pd.DataFrame.from_dict(data)
-z_data = z_scaler.transform(d)
-pca_data = pca_trafo.transform(z_data)
+z_data = scaler.transform(d)
+pca_data = pca.transform(z_data)
 ################################
 
-fig = py.figure(figsize=(4.5, 15), dpi=100)   
-fig.subplots_adjust(hspace=0, top=0.97, bottom=0.08, left=0.20, right=0.95)
-gs = gridspec.GridSpec(4,1) 
+fig = py.figure(figsize=(4.5, 11), dpi=100)   
+fig.subplots_adjust(hspace=0, top=0.97, bottom=0.07, left=0.20, right=0.95)
+gs = gridspec.GridSpec(5,1) 
 p = 0
 
 
@@ -134,11 +110,14 @@ pc0 = pca_data[:,0]
 pc1 = pca_data[:,1]
 pc2 = pca_data[:,2]
 
+data = {'r-w1':r_w1, '$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50, 'C82':C82, 'pc0':pc0}
+d = pd.DataFrame.from_dict(data)
+corr = d.corr()
 ############################################################################1st TOP panel
 ax = plt.subplot(gs[p]) ; p+=1 
 a0, b0  = np.polyfit(pc0, r_w1, 1)
 delta = np.abs(r_w1-(a0*pc0+b0))
-indx = np.where(delta<0.5)
+indx = np.where(delta<1)
 r_w1_ = r_w1[indx]
 pc0_ = pc0[indx]
 #ax.plot(r_w1,pc0, 'g.', alpha=0.7)
@@ -165,12 +144,16 @@ Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.65*Ylm[0]+0.35*Ylm[1]
 ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
+
+x0 = 0.45*Xlm[0]+0.55*Xlm[1]
+y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['pc0'], fontsize=12, color='k')
 ############################################################################2nd panel
 ax = plt.subplot(gs[p]) ; p+=1
 
 a0, b0  = np.polyfit(mu50, r_w1, 1)
 delta = np.abs(r_w1-(a0*mu50+b0))
-indx = np.where(delta<0.5)
+indx = np.where(delta<1.)
 r_w1_ = r_w1[indx]
 mu50_ = mu50[indx]
 #ax.plot(r_w1,mu50, 'g.', alpha=0.7)
@@ -187,7 +170,7 @@ ax.plot(x,y, 'k--')
 
 add_axis(ax,[-2,2],[26.8,19.2])
 plt.setp(ax.get_xticklabels(), visible=False)
-ax.set_ylabel('$<\mu>_e \/ [mag \/ arcsec^{2}]$ ', fontsize=15, labelpad=7)
+ax.set_ylabel(r'$\langle \mu \rangle_e$', fontsize=15, labelpad=7)
 
 delta = np.abs(r_w1_-(a0*mu50_+b0))
 rms = np.sqrt(np.mean(np.square(delta)))
@@ -195,43 +178,18 @@ Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.65*Ylm[0]+0.35*Ylm[1]
 ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
-############################################################################3rd TOP panel
-ax = plt.subplot(gs[p]) ; p+=1
 
-a0, b0  = np.polyfit(logWimx, r_w1, 1)
-delta = np.abs(r_w1-(a0*logWimx+b0))
-indx = np.where(delta<0.5)
-r_w1_ = r_w1[indx]
-logWimx_ = logWimx[indx]
-#ax.plot(r_w1,logWimx, 'g.', alpha=0.7)
-for i in range(len(r_w1)):
-    if c21w[i]<1: p1, = ax.plot(r_w1[i], logWimx[i], 'b.', markersize=5, alpha=0.7, label=r"$"+text2+" < 1$")
-    if c21w[i]>=1 and c21w[i]< 3:
-            p2, = ax.plot(r_w1[i], logWimx[i], 'g.', markersize=5, alpha=0.7, label=r"$1 < "+text2+" < 3$")
-    if c21w[i]>=3:
-            p3, = ax.plot(r_w1[i], logWimx[i], 'r.', markersize=5, alpha=0.7, label=r"$3 < "+text2+"$")         
-a0, b0  = np.polyfit(logWimx_, r_w1_, 1)
-y = np.linspace(1,3,50)
-x = a0*y+b0
-ax.plot(x,y, 'k--')
-
-add_axis(ax,[-2,2],[1.65,2.90])
-plt.setp(ax.get_xticklabels(), visible=False)
-ax.set_ylabel('$Log( W_{mx}^i)$', fontsize=16, labelpad=7)
-
-delta = np.abs(r_w1_-(a0*logWimx_+b0))
-rms = np.sqrt(np.mean(np.square(delta)))
-Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
-y0 = 0.65*Ylm[0]+0.35*Ylm[1]
-ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
-############################################################################4th TOP panel
+y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$\mu 50$'], fontsize=12, color='k')
+
+############################################################################3rd TOP panel
 ax = plt.subplot(gs[p]) ; p+=1
 
 
 a0, b0  = np.polyfit(c21w, r_w1, 1)
 delta = np.abs(r_w1-(a0*c21w+b0))
-indx = np.where(delta<0.5)
+indx = np.where(delta<1.)
 r_w1_ = r_w1[indx]
 c21w_ = c21w[indx]
 #ax.plot(r_w1,c21w, 'g.', alpha=0.7)
@@ -246,10 +204,9 @@ y = np.linspace(-2,7,50)
 x = a0*y+b0
 ax.plot(x,y, 'k--')
 
-add_axis(ax,[-2,2],[-1.5,6.2])
-ax.set_xlabel('$'+text1+'$', fontsize=16, labelpad=7)
+add_axis(ax,[-2,2],[-1.5,7])
 ax.set_ylabel('$C_{21W2}$', fontsize=16, labelpad=7)
-
+plt.setp(ax.get_xticklabels(), visible=False)
 delta = np.abs(r_w1_-(a0*c21w_+b0))
 rms = np.sqrt(np.mean(np.square(delta)))
 Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
@@ -257,10 +214,71 @@ x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.65*Ylm[0]+0.35*Ylm[1]
 ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 
+x0 = 0.45*Xlm[0]+0.55*Xlm[1]
+y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$c21W2$'], fontsize=12, color='k')
+
+#labels=ax.get_yticks().tolist()
+#for i in range(len(labels)): labels[i] = str(np.int(labels[i]))
+#labels[4] = ''; 
+#ax.set_yticklabels(labels)
+############################################################################4 TOP panel
+ax = plt.subplot(gs[p]) ; p+=1
+
+a0, b0  = np.polyfit(logWimx, r_w1, 1)
+delta = np.abs(r_w1-(a0*logWimx+b0))
+indx = np.where(delta<1.)
+r_w1_ = r_w1[indx]
+logWimx_ = logWimx[indx]
+#ax.plot(r_w1,logWimx, 'g.', alpha=0.7)
+for i in range(len(r_w1)):
+    if c21w[i]<1: p1, = ax.plot(r_w1[i], logWimx[i], 'b.', markersize=5, alpha=0.7, label=r"$"+text2+" < 1$")
+    if c21w[i]>=1 and c21w[i]< 3:
+            p2, = ax.plot(r_w1[i], logWimx[i], 'g.', markersize=5, alpha=0.7, label=r"$1 < "+text2+" < 3$")
+    if c21w[i]>=3:
+            p3, = ax.plot(r_w1[i], logWimx[i], 'r.', markersize=5, alpha=0.7, label=r"$3 < "+text2+"$")         
+a0, b0  = np.polyfit(logWimx_, r_w1_, 1)
+y = np.linspace(1,3,50)
+x = a0*y+b0
+ax.plot(x,y, 'k--')
+
+add_axis(ax,[-2,2],[1.6,2.9])
+plt.setp(ax.get_xticklabels(), visible=False)
+ax.set_ylabel('$Log( W_{mx}^i)$', fontsize=16, labelpad=7)
+
+delta = np.abs(r_w1_-(a0*logWimx_+b0))
+rms = np.sqrt(np.mean(np.square(delta)))
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.45*Xlm[0]+0.55*Xlm[1]
+y0 = 0.65*Ylm[0]+0.35*Ylm[1]
+ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
+
+x0 = 0.45*Xlm[0]+0.55*Xlm[1]
+y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$Log( W_{mx}^i)$'], fontsize=12, color='k')
+
+#labels=ax.get_yticks().tolist()
+#labels[0] = ''; 
+#ax.set_yticklabels(labels)
+
+############################################################################5th TOP panel
+ax = plt.subplot(gs[p]) ; p+=1
+
+for i in range(len(r_w1)):
+    if c21w[i]<1: p1, = ax.plot(r_w1[i], C82[i], 'b.', markersize=5, alpha=0.7, label=r"$"+text2+" < 1$")
+    if c21w[i]>=1 and c21w[i]< 3:
+            p2, = ax.plot(r_w1[i], C82[i], 'g.', markersize=5, alpha=0.7, label=r"$1 < "+text2+" < 3$")
+    if c21w[i]>=3:
+            p3, = ax.plot(r_w1[i], C82[i], 'r.', markersize=5, alpha=0.7, label=r"$3 < "+text2+"$") 
+
+add_axis(ax,[-2,2],[1.5,8.8])
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.45*Xlm[0]+0.55*Xlm[1]
+y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['C82'], fontsize=12, color='k')
+ax.set_xlabel('$'+text1+'$', fontsize=16, labelpad=7)
+ax.set_ylabel('$C_{82}$', fontsize=16, labelpad=7)
 
 
-
-
-
-
-plt.show()
+#plt.show()
+plt.savefig('r_w2_features_Fon.eps', dpi=600)

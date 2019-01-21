@@ -15,8 +15,46 @@ from scipy import odr
 import pylab as py
 from matplotlib import gridspec
 import copy 
+import sklearn.datasets as ds
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
 
 from Kcorrect import *
+################################################################# 
+def transform(inFile, band1 = 'r', band2 = 'w2'):
+    
+    table = getTable(inFile, band1=band1, band2=band2, faceOn=False)
+
+    pgc = table['pgc']
+    logWimx = table['logWimx']
+    logWimx_e = table['logWimx_e']
+    inc = table['inc']
+    r_w1 = table['r_w1']
+    c21w = table['c21w'] 
+    Er_w1 = table['Er_w1']
+    Ec21w = table['Ec21w']
+
+    C82  = table['C82_w2']   # concentration 80%/20%
+    mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
+
+    z_scaler = StandardScaler()
+
+    data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    n_comp = len(data)
+    d = pd.DataFrame.from_dict(data)
+    z_data = z_scaler.fit_transform(d)
+
+
+    pca_trafo = PCA().fit(z_data)
+    pca_data = pca_trafo.fit_transform(z_data)
+    A = pca_trafo.explained_variance_ratio_                    # The importance of different PCAs components
+    pca_inv_data = pca_trafo.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
+
+
+    delta = pca_data[:,0]-(pca_inv_data[0,0]*z_data[:,0]+pca_inv_data[0,1]*z_data[:,1]+pca_inv_data[0,2]*z_data[:,2])    
+    
+    return z_scaler, pca_trafo
 ################################################################# 
 def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
     
