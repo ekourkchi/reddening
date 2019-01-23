@@ -26,17 +26,10 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
     
     table = getTable(inFile, band1=band1, band2=band2, faceOn=False)
 
-    pgc = table['pgc']
     logWimx = table['logWimx']
-    logWimx_e = table['logWimx_e']
-    inc = table['inc']
-    r_w1 = table['r_w1']
     c21w = table['c21w'] 
-    Er_w1 = table['Er_w1']
-    Ec21w = table['Ec21w']
-
     C82  = table['C82_w2']   # concentration 80%/20%
-    mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
+    mu50 = table['mu50']
 
     z_scaler = StandardScaler()
 
@@ -45,14 +38,7 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
     d = pd.DataFrame.from_dict(data)
     z_data = z_scaler.fit_transform(d)
 
-
     pca_trafo = PCA().fit(z_data)
-    pca_data = pca_trafo.fit_transform(z_data)
-    A = pca_trafo.explained_variance_ratio_                    # The importance of different PCAs components
-    pca_inv_data = pca_trafo.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
-
-
-    delta = pca_data[:,0]-(pca_inv_data[0,0]*z_data[:,0]+pca_inv_data[0,1]*z_data[:,1]+pca_inv_data[0,2]*z_data[:,2])    
     
     return z_scaler, pca_trafo
 ################################################################# 
@@ -79,11 +65,16 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
     index, = np.where(delta<=0.15)
     table = trim(table, index)
 
+    index, = np.where(table['Wba']>0.01)
+    table = trim(table, index)
+    
     table['c21w'] = table['m21'] - table[band2]
     table['r_w1'] = table[band1] - table[band2]
 
     table['Ec21w'] = np.sqrt(table['m21_e']**2+0.05**2)
     table['Er_w1'] = 0.*table['r_w1']+0.1
+    
+    table['mu50'] = table[band2]+2.5*np.log10(2.*np.pi*(table['R50_'+band2]*60)**2)-2.5*np.log10(table['Wba'])
 
     index, = np.where(table['logWimx']>1)
     table = trim(table, index)
@@ -203,6 +194,49 @@ def log_a_b(inc, q2):
     
     return np.log(a_b)
 ################################################################# 
+def faceON_pca(inFile, band1 = 'r', band2 = 'w1'):
+    
+    scaler, pca = transform(inFile, band1=band1, band2=band2)
+    
+    table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
+    
+    index, = np.where(table['Wba']>0.001)
+    table = trim(table, index)
+
+    pgc = table['pgc']
+    logWimx = table['logWimx']
+    logWimx_e = table['logWimx_e']
+    inc = table['inc']
+    r_w1 = table['r_w1']
+    c21w = table['c21w'] 
+    Er_w1 = table['Er_w1']
+    Ec21w = table['Ec21w']
+
+    C82  = table['C82_w2']   # concentration 80%/20%
+    mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
+    
+    data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    d = pd.DataFrame.from_dict(data)
+    z_data = scaler.transform(d)
+    pca_data = pca.transform(z_data)
+
+    pc0 = pca_data[:,0]
+    pc1 = pca_data[:,1]
+    pc2 = pca_data[:,2]
+
+    a0, b0  = np.polyfit(pc0, r_w1, 1)
+    delta = np.abs(r_w1-(a0*pc0+b0))
+    indx = np.where(delta<1)
+    r_w1_ = r_w1[indx]
+    pc0_ = pc0[indx]    
+    
+    AB, cov  = np.polyfit(pc0_, r_w1_, 1, cov=True, full = False)
+    a0, b0 = AB[0], AB[1]
+    delta = np.abs(r_w1_-(a0*pc0_+b0))
+    rms = np.sqrt(np.mean(np.square(delta)))
+    
+    return scaler, pca, AB, cov, rms
+################################################################# 
 def faceON(table):
 
     index, = np.where(table['flag']>0)
@@ -281,5 +315,35 @@ def extinctionCorrect(table):
     return table
     
 ################################################################# 
+def getBand(inFile, band1 = 'r', band2 = 'w1'):
+
+    scaler, pca, AB, cov, rms = faceON_pca(inFile, band1=band1, band2=band2)
+    a0, b0 = AB[0], AB[1]
     
+    table = getTable(inFile, band1=band1, band2=band2, faceOn=False)
+    pgc = table['pgc']
+    logWimx = table['logWimx']
+    logWimx_e = table['logWimx_e']
+    inc = table['inc']
+    r_w1 = table['r_w1']
+    c21w = table['c21w'] 
+    Er_w1 = table['Er_w1']
+    Ec21w = table['Ec21w']
+    C82  = table['C82_w2']   # concentration 80%/20%
+    mu50 = table['mu50']    
+    data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    d = pd.DataFrame.from_dict(data)
+    z_data = scaler.transform(d)
+    pca_data = pca.transform(z_data)
+
+    pc0 = pca_data[:,0]
+    pc1 = pca_data[:,1]
+    pc2 = pca_data[:,2]   
+    
+    Input = [pgc, r_w1, pc0, inc]
+    Reddening = r_w1-(a0*pc0+b0)
+
+    
+    return Reddening, Input, [scaler, pca, AB, cov, rms]    
+################################################################# 
     

@@ -60,12 +60,9 @@ def add_axis(ax, xlim, ylim):
 def plot_Band(ax, band1='r', band2='w1'):
     
     inFile  = 'ESN_HI_catal.csv'
-    scaler, pca = transform(inFile, band1=band1, band2=band2)
+    scaler, pca, AB, cov, rms = faceON_pca(inFile, band1=band1, band2=band2)
     
     table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
-    
-    index, = np.where(table['Wba']>0.01)
-    table = trim(table, index)
 
     text1 = '\overline{'+band1+'}-\overline{W}1'            # example: cr-W1
        
@@ -85,9 +82,8 @@ def plot_Band(ax, band1='r', band2='w1'):
     c21w = table['c21w'] 
     Er_w1 = table['Er_w1']
     Ec21w = table['Ec21w']
-
     C82  = table['C82_w2']   # concentration 80%/20%
-    mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
+    mu50 = table['mu50']
     
     data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
     d = pd.DataFrame.from_dict(data)
@@ -102,13 +98,6 @@ def plot_Band(ax, band1='r', band2='w1'):
     d = pd.DataFrame.from_dict(data)
     corr = d.corr()
     
-    a0, b0  = np.polyfit(pc0, r_w1, 1)
-    delta = np.abs(r_w1-(a0*pc0+b0))
-    indx = np.where(delta<1)
-    r_w1_ = r_w1[indx]
-    pc0_ = pc0[indx]    
-    
-    AB, cov  = np.polyfit(pc0_, r_w1_, 1, cov=True, full = False)
     a0, b0 = AB[0], AB[1]
     y = np.linspace(-5,5,50)
     x = a0*y+b0
@@ -139,7 +128,7 @@ def plot_Band(ax, band1='r', band2='w1'):
     
     # Legend
     lns = [p1, p2, p3]
-    if band1=='i':  ax.legend(handles=lns, loc=1, fontsize=13)
+    if band1=='w1':  ax.legend(handles=lns, loc=1, fontsize=13)
     #if band1=='w1':  
         #ax.legend(handles=lns, loc=4, fontsize=11)
         #band1 = '{w1}'
@@ -162,13 +151,10 @@ def plot_Band(ax, band1='r', band2='w1'):
     ax.text(x0,y0, r'$\beta=$'+'%.2f'%b+'$\pm$'+'%.2f'%be, fontsize=14, color='k')  
     
 
-    delta = np.abs(r_w1_-(a0*pc0_+b0))
-    rms = np.sqrt(np.mean(np.square(delta)))
     Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
     y0 = 0.80*Ylm[0]+0.20*Ylm[1]
     ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=14, color='k')    
-    
-    
+        
     y0 = 0.9*Ylm[0]+0.10*Ylm[1]
     ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['pc0'], fontsize=14, color='k')    
     

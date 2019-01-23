@@ -70,8 +70,6 @@ scaler, pca = transform(inFile, band1=band1, band2=band2)
 
 #### Face ON
 table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
-index, = np.where(table['Wba']>0.01)
-table = trim(table, index)
 
 pgc = table['pgc']
 logWimx = table['logWimx']
@@ -83,7 +81,7 @@ Er_w1 = table['Er_w1']
 Ec21w = table['Ec21w']
 
 C82  = table['C82_w2']   # concentration 80%/20%
-mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
+mu50 = table['mu50']
 
 print len(logWimx)
 data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
