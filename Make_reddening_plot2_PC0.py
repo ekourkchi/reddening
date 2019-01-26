@@ -23,64 +23,6 @@ from sklearn.preprocessing import StandardScaler
 from redTools import *
 from Kcorrect import *
 ################################################################# 
-def R_model(inc, x_, band):
-    
-    y_ = 0
-    
-    if band=='u':
-        a=-0.004
-        b=-0.016
-        c=0.057
-        d=0.473
-        alpha = 0.021
-        beta = -0.158
-        gamma = 2.795
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(inc, q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-    if band=='g':
-        a=-0.002
-        b=-0.014
-        c=0.030
-        d=0.346
-        alpha = 0.032
-        beta = -0.101
-        gamma = 2.986
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(inc, q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-    if band=='r':
-        a=-0.002
-        b=-0.012
-        c=0.020
-        d=0.266
-        alpha = 0.042
-        beta = -0.072
-        gamma = 3.120
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(inc, q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-    if band=='i':
-        a=-0.001
-        b=-0.011
-        c=0.012
-        d=0.216
-        alpha = 0.042
-        beta = -0.044
-        gamma = 3.186
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(inc, q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-    if band=='z':
-        a=-0.001
-        b=-0.009
-        c=0.007
-        d=0.169
-        alpha = 0.044
-        beta = -0.019
-        gamma = 3.286
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(inc, q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-    return y_
-    
-    
-################################################################# 
 
 def add_axis(ax, xlim, ylim):
     
@@ -180,8 +122,11 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     ax.set_yticks([])
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')    
-    ax.annotate(r'$A_{w2}^{inc}$', (0.010,0.52), xycoords='figure fraction', size=16, color='black', rotation=90)
-
+    ax.annotate(r'$A_{w2}^{(i)} \/\/ [mag]$', (0.010,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
+    
+    ax.annotate(r'$inclination \/ [deg]$', (0.47,0.02), xycoords='figure fraction', size=16, color='black')
+    
+    fig.savefig("A_w2_inc.png")
     plt.show()
     
 ################################################################## 
@@ -205,7 +150,10 @@ def plot_Rinc(ax, R, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     pgc = pgc[index]
     inc = inc[index]
     R = R[index]    
-
+    
+    a, b, c, d, alpha, beta, gamma = getReddening_params(band=band)
+    R = R - (alpha*pc0+beta)
+    
     ### Model
     if True:  
         inc__ = np.arange(45,90,0.1)
@@ -217,17 +165,16 @@ def plot_Rinc(ax, R, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
             
             r_lst = []
             for pc0_ in np.arange(pc0_lim[0], pc0_lim[1], 0.1):
-                    r = R_model(inc__[ii], pc0_, band)
+                    q2 = 10**(-1.*gamma)
+                    r = log_a_b(inc__[ii], q2)*(a*pc0_**3+b*pc0_**2+c*pc0_+d)
                     r_lst.append(r)
             r_min[ii] = np.min(r_lst)
             r_max[ii] = np.max(r_lst)
-        ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
-        
-        
-        
+        if band!='w1': 
+            ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
         
     if scatter:
-        ax.plot(inc, R, 'o', color='black', markersize=1, alpha=0.2)
+        ax.plot(inc, R, 'o', color='black', markersize=1, alpha=0.4)
   
     if binned:
         xl = []
@@ -272,20 +219,20 @@ def plot_Rinc(ax, R, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     ax.minorticks_on()
     
     #ax.text(45,0.8, r''+"%.0f" % (c21w_[0])+'$< c21W_1 <'+"%.0f" % (c21w_[1])+'$', color=color, fontsize=11)
-    ax.text(47,-0.7, r''+"%.1f" % (pc0_lim[0])+'$< PC0 <$'+"%.1f" % (pc0_lim[1]), fontsize=13)
+    ax.text(52,-0.7, r''+"%.1f" % (pc0_lim[0])+'$< P_0 <$'+"%.1f" % (pc0_lim[1]), fontsize=13)
     
-    ax.text(47,1.1, band, fontsize=14, color=color)
+    ax.text(47,1.4, band, fontsize=14, color=color)
 
-    ax.set_ylim([-0.9,1.4])     
+    ax.set_ylim([-0.9,1.7])     
     ax.set_xlim([41,99])    
     ax.plot([0,100], [0,0], 'k:')
     
-    if xlabel: ax.set_xlabel(r'$inclination \/ [deg]$', fontsize=16)
-    if ylabel: ax.set_ylabel(r'$A_{w2}^{(inc)}$', fontsize=16) 
+    #if xlabel: ax.set_xlabel(r'$inclination \/ [deg]$', fontsize=16)
+    #if ylabel: ax.set_ylabel(r'$A_{w2}^{(inc)}$', fontsize=16) 
     
     if Y_twin:
         y_ax = ax.twinx()
-        y_ax.set_ylim(-0.9,1.4)
+        y_ax.set_ylim(-0.9,1.7)
         y_ax.set_yticklabels([])
         y_ax.minorticks_on()
         y_ax.tick_params(which='major', length=6, width=1.5, direction='in')

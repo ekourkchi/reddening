@@ -86,31 +86,31 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     
     fig = py.figure(figsize=(15, 12), dpi=100)    
     fig.subplots_adjust(wspace=0, top=0.97, bottom=0.07, left=0.06, right=0.98)
-    gs = gridspec.GridSpec(4, 6, height_ratios=[1,1,1,1]) 
+    gs = gridspec.GridSpec(5, 6, height_ratios=[1,1,1,1,1]) 
 
     p = 0
     ####################################################
     inc_0 = 85
     inc_1 = 90
-    for jj in range(4):
+    for jj in range(5):
         
         
         for band in ['u', 'g','r','i','z','w1']:
             
             xlabel = False; ylabel=False
             #if band=='u': ylabel=True
-            if jj==3 and band=='i': xlabel=True
+            if jj==4 and band=='i': xlabel=True
             
             ax = plt.subplot(gs[p]) ; p+=1
             plot_Rinc(ax, R[band], Input[band], inc_lim=[inc_0,inc_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band)
             yticks = ax.yaxis.get_major_ticks()
             if band!='u': yticks[-1].label1.set_visible(False)
-            if jj!=3: plt.setp(ax.get_xticklabels(), visible=False)
+            if jj!=4: plt.setp(ax.get_xticklabels(), visible=False)
             if band!='u': plt.setp(ax.get_yticklabels(), visible=False)  
               
         
-        inc_0-=5
-        inc_1-=5     
+        inc_0-=10
+        inc_1-=10     
         #####################################################
     
     plt.subplots_adjust(hspace=.0, wspace=0)
@@ -121,8 +121,11 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     ax.set_yticks([])
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')    
-    ax.annotate(r'$A_{w2}^{inc}$', (0.010,0.52), xycoords='figure fraction', size=16, color='black', rotation=90)
-
+    ax.annotate(r'$A_{w2}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
+    
+    ax.annotate(r'$P_0$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
+    
+    fig.savefig("A_w2_P0.png")
     plt.show()
     
 ################################################################## 
@@ -146,81 +149,22 @@ def plot_Rinc(ax, R, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     pgc = pgc[index]
     inc = inc[index]
     R = R[index]    
+    
+    a,b,c,d, alpha, beta, gamma = getReddening_params(band=band)
+    
+    R = R - (alpha*pc0+beta)
 
     if scatter:
-        ax.plot(pc0, R, 'o', color='black', markersize=1, alpha=0.2)
+        ax.plot(pc0, R, 'o', color='black', markersize=1, alpha=0.42)
     
     ### Fitting a curve
-    if band=='u':
-        #a, b, c, d  = np.polyfit(pc0,R, 3)
-        x_ = np.linspace(-4,4,50)
-        a=-0.004
-        b=-0.016
-        c=0.057
-        d=0.473
-        alpha = 0.021
-        beta = -0.158
-        gamma = 2.795
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(0.5*(inc_lim[0]+inc_lim[1]), q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-        #y_ = a*x_**3+b*x_**2+c*x_+d
-        ax.plot(x_, y_, 'k--')    
-    if band=='g':
-        #a, b, c, d  = np.polyfit(pc0,R, 3)
-        x_ = np.linspace(-4,4,50)
-        a=-0.002
-        b=-0.014
-        c=0.030
-        d=0.346
-        alpha = 0.032
-        beta = -0.101
-        gamma = 2.986
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(0.5*(inc_lim[0]+inc_lim[1]), q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-        #y_ = a*x_**3+b*x_**2+c*x_+d
-        ax.plot(x_, y_, 'k--')  
-    if band=='r':
-        #a, b, c, d  = np.polyfit(pc0,R, 3)
-        x_ = np.linspace(-4,4,50)
-        a=-0.002
-        b=-0.012
-        c=0.020
-        d=0.266
-        alpha = 0.042
-        beta = -0.072
-        gamma = 3.120
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(0.5*(inc_lim[0]+inc_lim[1]), q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-        #y_ = a*x_**3+b*x_**2+c*x_+d
-        ax.plot(x_, y_, 'k--')        
-    if band=='i':
-        #a, b, c, d  = np.polyfit(pc0,R, 3)
-        x_ = np.linspace(-4,4,50)
-        a=-0.001
-        b=-0.011
-        c=0.012
-        d=0.216
-        alpha = 0.042
-        beta = -0.044
-        gamma = 3.186
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(0.5*(inc_lim[0]+inc_lim[1]), q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-        #y_ = a*x_**3+b*x_**2+c*x_+d
-        ax.plot(x_, y_, 'k--') 
-    if band=='z':
-        #a, b, c, d  = np.polyfit(pc0,R, 3)
-        x_ = np.linspace(-4,4,50)
-        a=-0.001
-        b=-0.009
-        c=0.007
-        d=0.169
-        alpha = 0.044
-        beta = -0.019
-        gamma = 3.286
-        q2 = 10**(-1.*gamma)
-        y_ = log_a_b(0.5*(inc_lim[0]+inc_lim[1]), q2)*(a*x_**3+b*x_**2+c*x_+d)+(alpha*x_+beta)
-        #y_ = a*x_**3+b*x_**2+c*x_+d
-        ax.plot(x_, y_, 'k--')         
+    #a, b, c, d  = np.polyfit(pc0,R, 3)
+    #y_ = a*x_**3+b*x_**2+c*x_+d
+    x_ = np.linspace(-4,4,50)
+    q2 = 10**(-1.*gamma)
+    y_ = log_a_b(np.median(inc), q2)*(a*x_**3+b*x_**2+c*x_+d)
+    ax.plot(x_, y_, 'k--')    
+
         
     if binned:
         xl = []
@@ -267,18 +211,18 @@ def plot_Rinc(ax, R, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     #ax.text(45,0.8, r''+"%.0f" % (c21w_[0])+'$< c21W_1 <'+"%.0f" % (c21w_[1])+'$', color=color, fontsize=11)
     ax.text(-2,-0.4, r''+"%.0f" % (inc_lim[0])+'$< inc. <$'+"%.0f" % (inc_lim[1]), fontsize=13)
     
-    ax.text(-3,1.4, band, fontsize=14, color=color)
+    ax.text(-3,1.3, band, fontsize=14, color=color)
 
-    ax.set_ylim([-0.6,1.7])     
+    ax.set_ylim([-0.7,1.7])     
     ax.set_xlim([-3.6,3.6])    
     ax.plot([-4,4], [0,0], 'k:')
     
-    if xlabel: ax.set_xlabel('$PC0$', fontsize=16)
-    if ylabel: ax.set_ylabel(r'$A_{w2}^{(inc)}$', fontsize=16) 
+    #if xlabel: ax.set_xlabel('$P_0$', fontsize=16)
+    #if ylabel: ax.set_ylabel(r'$A_{w2}^{(inc)}$', fontsize=16) 
     
     if Y_twin:
         y_ax = ax.twinx()
-        y_ax.set_ylim(-0.6,1.7)
+        y_ax.set_ylim(-0.7,1.7)
         y_ax.set_yticklabels([])
         y_ax.minorticks_on()
         y_ax.tick_params(which='major', length=6, width=1.5, direction='in')
@@ -309,4 +253,6 @@ def plot_Rinc(ax, R, Input, inc_lim=[85,90], color='red', scatter=False, binned=
 
 
 
-plot_array('ESN_HI_catal.csv', scatter=True, binned=True, band2='w2')                
+plot_array('ESN_HI_catal.csv', scatter=True, binned=True, band2='w2')     
+
+

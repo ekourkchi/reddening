@@ -345,5 +345,68 @@ def getBand(inFile, band1 = 'r', band2 = 'w1'):
 
     
     return Reddening, Input, [scaler, pca, AB, cov, rms]    
+
 ################################################################# 
+def getReddening_params(band='r'):
+    
+    a=0;b=0;c=0;d=0;alpha=0;beta=0;gamma=0
+    
+    if band=='u':
+        a=-0.004
+        b=-0.016
+        c=0.057
+        d=0.473
+        alpha = 0.021
+        beta = -0.158
+        gamma = 2.795
+    if band=='g':
+        a=-0.002
+        b=-0.014
+        c=0.030
+        d=0.346
+        alpha = 0.032
+        beta = -0.101
+        gamma = 2.986
+    if band=='r':
+        a=-0.002
+        b=-0.012
+        c=0.020
+        d=0.266
+        alpha = 0.042
+        beta = -0.072
+        gamma = 3.121
+    if band=='i':
+        a=-0.001
+        b=-0.011
+        c=0.012
+        d=0.216
+        alpha = 0.042
+        beta = -0.044
+        gamma = 3.186
+    if band=='z':
+        a=-0.001
+        b=-0.009
+        c=0.007
+        d=0.169
+        alpha = 0.044
+        beta = -0.019
+        gamma = 3.286
+    if band=='w1':
+        a=0
+        b=0
+        c=0.005
+        d=0.017
+        alpha = -0.00046700368914050845
+        beta = 0.017647840909221335
+        gamma = 1.775476224213375
+    
+    return a,b,c,d, alpha, beta, gamma    
+
+################################################################# 
+    
+    
+    
+    
+    
+    
     

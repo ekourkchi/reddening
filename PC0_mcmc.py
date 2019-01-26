@@ -26,6 +26,13 @@ import scipy.optimize as op
 from redTools import *
 from Kcorrect import *
 
+from matplotlib import rcParams
+rcParams["font.size"] = 14
+#rcParams["font.family"] = "sans-serif"
+#rcParams["font.sans-serif"] = ["Computer Modern Sans"]
+rcParams["text.usetex"] = True
+rcParams["text.latex.preamble"] = r"\usepackage{cmbright}"
+
 ################################################################# 
 def data_trim(ndim, ind, limits, samples):
     
@@ -49,11 +56,11 @@ def data_trim(ndim, ind, limits, samples):
 
     return samples
 ################################################################# 
-
-
+band1 = 'r'
+band2 = 'w2'
 ################################################################# 
 
-R, Input, T = getBand('ESN_HI_catal.csv', band1 = 'w1', band2 = 'w2')
+R, Input, T = getBand('ESN_HI_catal.csv', band1=band1 , band2=band2)
 r_w1    = Input[1]
 pc0     = Input[2]
 inc     = Input[3]
@@ -63,9 +70,11 @@ def lnlike(theta, inc, R, pc0):
     
     
     a,b,c,d,alpha,beta,gamma = theta
+    #c,d,alpha,beta,gamma = theta
     q2 = 10**(-1.*gamma)
     
     model = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)+(alpha*pc0+beta)
+    #model = log_a_b(inc, q2)*(c*pc0+d)+(alpha*pc0+beta)
     
     yerr = R*0+0.05
     inv_sigma2 = 1.0/(yerr**2) 
@@ -74,8 +83,9 @@ def lnlike(theta, inc, R, pc0):
 def lnprior(theta):
     
     a,b,c,d,alpha,beta,gamma = theta
+    #c,d,alpha,beta,gamma = theta
 
-    if gamma>10. or gamma<1.: return -np.inf 
+    if gamma>10. or gamma<0.8: return -np.inf 
     #if abs(alpha)>1.: return -np.inf 
     #if abs(beta)>1.: return -np.inf 
 
@@ -92,7 +102,8 @@ def lnprob(theta, inc, R, pc0):
 
 
 if True:
-        ndim, nwalkers = 7, 50
+        ndim, nwalkers = 7, 200
+        #ndim, nwalkers = 5, 200
 
         p0 = [np.random.randn(ndim) for i in range(nwalkers)]
 
@@ -101,40 +112,48 @@ if True:
 
         #pos, prob, state = sampler.run_mcmc(p0, 50)
         #sampler.reset()
-        sampler.run_mcmc(p0, 20000)
+        sampler.run_mcmc(p0, 50000)
 
 
         ## removing the first 1000 samples
-        samples = sampler.chain[:, 2000:, :].reshape((-1, ndim))
+        samples = sampler.chain[:, 5000:, :].reshape((-1, ndim))
 
         
         
 ############################### Cleaning output
 
-
-        #samples = data_trim(ndim, 0, [-0.05,0.05], samples)  # a
-        #samples = data_trim(ndim, 1, [-0.2,0], samples)    # b  
-        #samples = data_trim(ndim, 2, [-1.5,1.5], samples)     # c
-        #samples = data_trim(ndim, 3, [-2,-2], samples)        # d
-        #samples = data_trim(ndim, 4, [-1.5,1.5], samples)     # e
-        #samples = data_trim(ndim, 5, [2.4,3.1], samples)        # alfa
-        #samples = data_trim(ndim, 6, [-0.03,0.03], samples)    # A
-        #samples = data_trim(ndim, 7, [-1.5,1.5], samples)     # B
-        #samples = data_trim(ndim, 8, [-1.5,1.5], samples)    # C     
-        #samples = data_trim(ndim, 9, [-2.5,2.5], samples)    # D     
-        #samples = data_trim(ndim, 10, [1.5,1.5], samples)     # E     
+   
         T = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
         
         for i in range(ndim):
-            #print i, T[i], [T[i][0]-T[i][2],T[i][0]+T[i][1]]
             samples = data_trim(ndim, i, [T[i][0]-3*T[i][2],T[i][0]+3*T[i][1]], samples)
         
       
 
         a,b,c,d,alpha,beta,gamma = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84],                                     axis=0)))
-                                    
+
+        
+        #c,d,alpha,beta,gamma = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
+ 
+        
         truths=[a[0],b[0],c[0],d[0],alpha[0],beta[0],gamma[0]]
-        fig = corner.corner(samples, labels=["$a$","$b$", "$c$", "$d$","alpha", "beta", "gamma"], truths=truths, quantiles=[0.16, 0.5, 0.84], show_titles=True, title_kwargs={"fontsize": 12}, title_fmt=".3f")
+        fig = corner.corner(samples, labels=["$a$","$b$", "$c$", "$d$",r"$\alpha$", r"$\beta$", r"$\gamma$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+                    levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
+                    show_titles=True, fill_contours=True, plot_density=True,
+                    scale_hist=False,space=0, 
+                    title_kwargs={"fontsize":16}, title_fmt=".3f") 
+        
+        
+        #truths=[c[0],d[0],alpha[0],beta[0],gamma[0]]
+        #fig = corner.corner(samples, labels=["$c$", "$d$",r"$\alpha$", r"$\beta$", r"$\gamma$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+                    #levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
+                    #show_titles=True, fill_contours=True, plot_density=True,
+                    #scale_hist=False,space=0, 
+                    #title_kwargs={"fontsize":16}, title_fmt=".3f")        
+        
+       
+         
+        
        
         print "a: ", a
         print "b: ", b
@@ -146,6 +165,6 @@ if True:
    
         #print "sigma: ", sigma
         
-        fig.savefig("corner_plot_01.png")
+        fig.savefig("PC0_mcmc_"+band1+".png")
         plt.show()
 
