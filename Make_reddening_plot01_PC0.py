@@ -84,15 +84,27 @@ def plot_Band(ax, band1='r', band2='w1'):
     Ec21w = table['Ec21w']
     C82  = table['C82_w2']   # concentration 80%/20%
     mu50 = table['mu50']
+    Emu50 = table['Emu50']
     
     data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
+    list_of_tuples = [(key, data[key]) for key in order_of_keys]
+    data = OrderedDict(list_of_tuples)
+    n_comp = len(data)
     d = pd.DataFrame.from_dict(data)
     z_data = scaler.transform(d)
     pca_data = pca.transform(z_data)
+    s = scaler.scale_
+    pca_inv_data = pca.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
 
     pc0 = pca_data[:,0]
     pc1 = pca_data[:,1]
     pc2 = pca_data[:,2]
+    
+    p0 = pca_inv_data[0,0]
+    p1 = pca_inv_data[0,1]
+    p2 = pca_inv_data[0,2]
+    Epc0 = np.sqrt((p0*logWimx_e/s[0])**2+(p1*Ec21w/s[1])**2+(p2*Emu50/s[2])**2)
 
     data = {'r-w1':r_w1, '$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50, 'C82':C82, 'pc0':pc0}
     d = pd.DataFrame.from_dict(data)
@@ -113,10 +125,10 @@ def plot_Band(ax, band1='r', band2='w1'):
         if c21w[i]>=3:
             p3, = ax.plot(r_w1[i], pc0[i], 'r.', markersize=7, alpha=0.7, label=r"$3 < "+text2+"$")   
         
-    ax.set_xlabel('$'+text1+'$', fontsize=16, labelpad=7)
+    ax.set_xlabel('$'+text1+'\/\/ [mag]$', fontsize=16, labelpad=7)
     
     if band1 in ['u','i']:
-       ax.set_ylabel('$PC0$', fontsize=16, labelpad=7)
+       ax.set_ylabel('$P_0$', fontsize=16, labelpad=7)
     
     
     rw_lim = [-2.2,1.8]
@@ -159,7 +171,10 @@ def plot_Band(ax, band1='r', band2='w1'):
     ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['pc0'], fontsize=14, color='k')    
     
 
-  
+    Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+    x0 = 0.9*Xlm[0]+0.1*Xlm[1]
+    y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+    plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(Epc0)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)  
     #########################################################################  
 
     #x0 = 0.97*Xlm[0]+0.03*Xlm[1]
@@ -204,5 +219,5 @@ ax = plt.subplot(gs[p]) ; p+=1
 plot_Band(ax, band1='w1', band2='w2')
 plt.setp(ax.get_yticklabels(), visible=False)
 
-plt.show()
-
+#plt.show()
+plt.savefig('color_pc0_w2.eps', dpi=600)

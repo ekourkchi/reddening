@@ -19,6 +19,7 @@ import sklearn.datasets as ds
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
+from collections import OrderedDict
 
 from Kcorrect import *
 ################################################################# 
@@ -34,8 +35,11 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
     z_scaler = StandardScaler()
 
     data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
+    list_of_tuples = [(key, data[key]) for key in order_of_keys]
+    data = OrderedDict(list_of_tuples)
     n_comp = len(data)
-    d = pd.DataFrame.from_dict(data)
+    d =  pd.DataFrame.from_dict(data) 
     z_data = z_scaler.fit_transform(d)
 
     pca_trafo = PCA().fit(z_data)
@@ -44,7 +48,7 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
 ################################################################# 
 def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
     
-    inFile  = 'ESN_HI_catal.csv'
+    ###inFile  = 'ESN_HI_catal.csv'
     table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
 
     table = extinctionCorrect(table)
@@ -75,6 +79,12 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
     table['Er_w1'] = 0.*table['r_w1']+0.1
     
     table['mu50'] = table[band2]+2.5*np.log10(2.*np.pi*(table['R50_'+band2]*60)**2)-2.5*np.log10(table['Wba'])
+    
+    dWba2 = ((0.1/6./table['R50_'+band2])**2)*(1+table['Wba']**2)
+    c2 = (2.5/np.log(10))**2
+    table['Emu50']=np.sqrt(c2*(0.1/6./table['R50_'+band2])**2+c2*dWba2/table['Wba']**2+0.05**2)
+    
+    table['EC82'] = (5*np.sqrt(2.)/np.log(10))*(0.1/6./table['R50_'+band2])
 
     index, = np.where(table['logWimx']>1)
     table = trim(table, index)
@@ -216,6 +226,9 @@ def faceON_pca(inFile, band1 = 'r', band2 = 'w1'):
     mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
     
     data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
+    list_of_tuples = [(key, data[key]) for key in order_of_keys]
+    data = OrderedDict(list_of_tuples)
     d = pd.DataFrame.from_dict(data)
     z_data = scaler.transform(d)
     pca_data = pca.transform(z_data)
@@ -332,6 +345,10 @@ def getBand(inFile, band1 = 'r', band2 = 'w1'):
     C82  = table['C82_w2']   # concentration 80%/20%
     mu50 = table['mu50']    
     data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+    order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
+    list_of_tuples = [(key, data[key]) for key in order_of_keys]
+    data = OrderedDict(list_of_tuples)
+    n_comp = len(data)
     d = pd.DataFrame.from_dict(data)
     z_data = scaler.transform(d)
     pca_data = pca.transform(z_data)
@@ -342,9 +359,25 @@ def getBand(inFile, band1 = 'r', band2 = 'w1'):
     
     Input = [pgc, r_w1, pc0, inc]
     Reddening = r_w1-(a0*pc0+b0)
-
     
-    return Reddening, Input, [scaler, pca, AB, cov, rms]    
+    u = scaler.mean_
+    s = scaler.scale_
+    v = scaler.var_
+    ## z = (x-u)/s
+    ##u: mean  s:scale  var=s**2
+
+    pca_inv_data = pca.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
+    p0 = pca_inv_data[0,0]
+    p1 = pca_inv_data[0,1]
+    p2 = pca_inv_data[0,2]
+    
+    logWimx_e = table['logWimx_e']
+    Ec21w = table['Ec21w']
+    Emu50 = table['Emu50']
+    
+    table['Epc0'] = np.sqrt((p0*logWimx_e/s[0])**2+(p1*Ec21w/s[1])**2+(p2*Emu50/s[2])**2)
+    
+    return Reddening, Input, [scaler, pca, AB, cov, rms, table]    
 
 ################################################################# 
 def getReddening_params(band='r'):

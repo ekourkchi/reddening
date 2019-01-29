@@ -17,11 +17,10 @@ import matplotlib
 import sklearn.datasets as ds
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from collections import OrderedDict
 
 from redTools import *
 from Kcorrect import *
-
-
 ################################################################# 
 def add_axis(ax, xlim, ylim):
     
@@ -81,13 +80,25 @@ Er_w1 = table['Er_w1']
 Ec21w = table['Ec21w']
 
 C82  = table['C82_w2']   # concentration 80%/20%
+EC82 = table['EC82']
 mu50 = table['mu50']
+Emu50 = table['Emu50']
 
 print len(logWimx)
 data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
+order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
+list_of_tuples = [(key, data[key]) for key in order_of_keys]
+data = OrderedDict(list_of_tuples)
+n_comp = len(data)
 d = pd.DataFrame.from_dict(data)
 z_data = scaler.transform(d)
 pca_data = pca.transform(z_data)
+s = scaler.scale_
+pca_inv_data = pca.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
+p0 = pca_inv_data[0,0]
+p1 = pca_inv_data[0,1]
+p2 = pca_inv_data[0,2]
+Epc0 = np.sqrt((p0*logWimx_e/s[0])**2+(p1*Ec21w/s[1])**2+(p2*Emu50/s[2])**2)
 ################################
 
 fig = py.figure(figsize=(4.5, 11), dpi=100)   
@@ -130,7 +141,7 @@ y = np.linspace(-5,5,50)
 x = a0*y+b0
 ax.plot(x,y, 'k--')
 
-ax.set_ylabel('$PC0$', fontsize=15, labelpad=7)
+ax.set_ylabel('$P_0$', fontsize=15, labelpad=7)
 add_axis(ax,[-2,2],[-4.2,4.2])
 plt.setp(ax.get_xticklabels(), visible=False)
 lns = [p1, p2, p3]
@@ -146,6 +157,11 @@ ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['pc0'], fontsize=12, color='k')
+
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.9*Xlm[0]+0.1*Xlm[1]
+y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(Epc0)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
 ############################################################################2nd panel
 ax = plt.subplot(gs[p]) ; p+=1
 
@@ -181,6 +197,12 @@ x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$\mu 50$'], fontsize=12, color='k')
 
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.9*Xlm[0]+0.1*Xlm[1]
+y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(Emu50)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
+
+ax.text(-1.9,22, r'$[mag \/ arcsec^2]$', fontsize=12, color='k', rotation=90)
 ############################################################################3rd TOP panel
 ax = plt.subplot(gs[p]) ; p+=1
 
@@ -216,10 +238,12 @@ x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$c21W2$'], fontsize=12, color='k')
 
-#labels=ax.get_yticks().tolist()
-#for i in range(len(labels)): labels[i] = str(np.int(labels[i]))
-#labels[4] = ''; 
-#ax.set_yticklabels(labels)
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.9*Xlm[0]+0.1*Xlm[1]
+y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(Ec21w)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
+
+ax.text(-1.9,3, r'$[mag]$', fontsize=12, color='k', rotation=90)
 ############################################################################4 TOP panel
 ax = plt.subplot(gs[p]) ; p+=1
 
@@ -242,7 +266,7 @@ ax.plot(x,y, 'k--')
 
 add_axis(ax,[-2,2],[1.6,2.9])
 plt.setp(ax.get_xticklabels(), visible=False)
-ax.set_ylabel('$Log( W_{mx}^i)$', fontsize=16, labelpad=7)
+ax.set_ylabel('$log( W_{mx}^i)$', fontsize=16, labelpad=7)
 
 delta = np.abs(r_w1_-(a0*logWimx_+b0))
 rms = np.sqrt(np.mean(np.square(delta)))
@@ -255,10 +279,10 @@ x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$Log( W_{mx}^i)$'], fontsize=12, color='k')
 
-#labels=ax.get_yticks().tolist()
-#labels[0] = ''; 
-#ax.set_yticklabels(labels)
-
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.9*Xlm[0]+0.1*Xlm[1]
+y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(logWimx_e)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
 ############################################################################5th TOP panel
 ax = plt.subplot(gs[p]) ; p+=1
 
@@ -274,9 +298,13 @@ Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['C82'], fontsize=12, color='k')
-ax.set_xlabel('$'+text1+'$', fontsize=16, labelpad=7)
+ax.set_xlabel('$'+text1+'\/\/ [mag]$', fontsize=16, labelpad=7)
 ax.set_ylabel('$C_{82}$', fontsize=16, labelpad=7)
 
+Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
+x0 = 0.9*Xlm[0]+0.1*Xlm[1]
+y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(EC82)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
 
 #plt.show()
 plt.savefig('r_w2_features_Fon.eps', dpi=600)
