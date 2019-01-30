@@ -202,9 +202,21 @@ def log_a_b(inc, q2):
     b_a2 = (1.-q2)*(np.cos(inc))**2+q2
     a_b = np.sqrt(1./b_a2)
     
-    return np.log(a_b)
+    return np.log10(a_b)
+### inc [deg]
+def Elogab2(inc, q2, Einc):
+    
+    inc = inc*np.pi/180.
+    Einc = Einc*np.pi/180.
+    
+    dF2 = (0.5/np.log(10.))**2
+    dF2 *= ((np.sin(2*inc))**2)*(q2-1)**2
+    dF2 = dF2 / ((np.cos(inc))**2+q2*(np.sin(inc))**2)**2 
+    
+    return dF2*(Einc**2)
+
 ################################################################# 
-def faceON_pca(inFile, band1 = 'r', band2 = 'w1'):
+def faceON_pca(inFile, band1 = 'r', band2 = 'w2'):
     
     scaler, pca = transform(inFile, band1=band1, band2=band2)
     
@@ -223,7 +235,7 @@ def faceON_pca(inFile, band1 = 'r', band2 = 'w1'):
     Ec21w = table['Ec21w']
 
     C82  = table['C82_w2']   # concentration 80%/20%
-    mu50 = table['w2']+2.5*np.log10(2.*np.pi*(table['R50_w2']*60)**2)-2.5*np.log10(table['Wba'])
+    mu50 = table[band2]+2.5*np.log10(2.*np.pi*(table['R50_'+band2]*60)**2)-2.5*np.log10(table['Wba'])
     
     data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
     order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
@@ -328,7 +340,7 @@ def extinctionCorrect(table):
     return table
     
 ################################################################# 
-def getBand(inFile, band1 = 'r', band2 = 'w1'):
+def getBand(inFile, band1 = 'r', band2 = 'w2'):
 
     scaler, pca, AB, cov, rms = faceON_pca(inFile, band1=band1, band2=band2)
     a0, b0 = AB[0], AB[1]
@@ -401,13 +413,13 @@ def getReddening_params(band='r'):
         beta = -0.101
         gamma = 2.986
     if band=='r':
-        a=-0.002
-        b=-0.012
-        c=0.020
-        d=0.266
-        alpha = 0.042
-        beta = -0.072
-        gamma = 3.121
+        a=-0.012246670362774534
+        b=-0.05407500525662107
+        c=0.0688533163088458
+        d=0.6926203745113734
+        alpha = 0.21450808805502947
+        beta = -0.8429893034959123
+        gamma = 3.236026969722756
     if band=='i':
         a=-0.001
         b=-0.011

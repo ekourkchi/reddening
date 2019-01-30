@@ -59,15 +59,23 @@ def add_axis(ax, xlim, ylim):
 ########################################################### Begin
 def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     
-    R_u, Input_u, T = getBand(inFile, band1 = 'u', band2 = band2)
-    R_g, Input_g, T = getBand(inFile, band1 = 'g', band2 = band2)
-    R_r, Input_r, T = getBand(inFile, band1 = 'r', band2 = band2)
-    R_i, Input_i, T = getBand(inFile, band1 = 'i', band2 = band2)
-    R_z, Input_z, T = getBand(inFile, band1 = 'z', band2 = band2)
-    R_w1,Input_w1, T = getBand(inFile, band1 = 'w1', band2 = 'w2')
+    R_u, Input_u, T_u  = getBand(inFile, band1 = 'u', band2 = band2)
+    R_g, Input_g, T_g  = getBand(inFile, band1 = 'g', band2 = band2)
+    R_r, Input_r, T_r  = getBand(inFile, band1 = 'r', band2 = band2)
+    R_i, Input_i, T_i  = getBand(inFile, band1 = 'i', band2 = band2)
+    R_z, Input_z, T_z  = getBand(inFile, band1 = 'z', band2 = band2)
+    R_w1,Input_w1, T_w1 = getBand(inFile, band1 = 'w1', band2 = 'w2')
     
     R = {}
     Input = {}
+    T = {}
+    
+    T["u"]  = T_u
+    T["g"]  = T_g
+    T["r"]  = T_r
+    T["i"]  = T_i
+    T["z"]  = T_z
+    T["w1"] = T_w1
     
     R["u"] = R_u
     R["g"] = R_g
@@ -103,7 +111,7 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
             if jj==3 and band=='i': xlabel=True
             
             ax = plt.subplot(gs[p]) ; p+=1
-            plot_Rinc(ax, R[band], Input[band], pc0_lim=[PC0_0,PC0_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band)
+            plot_Rinc(ax, T[band], Input[band], pc0_lim=[PC0_0,PC0_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band)
             yticks = ax.yaxis.get_major_ticks()
             if band!='u': yticks[-1].label1.set_visible(False)
             if jj!=3: plt.setp(ax.get_xticklabels(), visible=False)
@@ -130,30 +138,45 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     plt.show()
     
 ################################################################## 
-def plot_Rinc(ax, R, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r'):
+def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r'):
     
     pgc     = Input[0]
     r_w1    = Input[1]
     pc0     = Input[2]
     inc     = Input[3]
     
+    AB = T[2] ; table = T[5]
+    a0, b0 = AB[0], AB[1]
+    
+    Er_w1 = table['Er_w1']
+    Epc0  = table['Epc0']
+    
     index = np.where(pc0>=pc0_lim[0])
     r_w1 = r_w1[index]
-    pc0 = pc0[index]
-    pgc = pgc[index]
-    inc = inc[index]
-    R = R[index]
+    pc0   = pc0[index]
+    pgc   = pgc[index]
+    inc   = inc[index]
+    Er_w1 = Er_w1[index]
+    Epc0  = Epc0[index]
 
     index = np.where(pc0<pc0_lim[1])
     r_w1 = r_w1[index]
-    pc0 = pc0[index]
-    pgc = pgc[index]
-    inc = inc[index]
-    R = R[index]    
+    pc0   = pc0[index]
+    pgc   = pgc[index]
+    inc   = inc[index]
+    Er_w1 = Er_w1[index]
+    Epc0  = Epc0[index]
     
-    a, b, c, d, alpha, beta, gamma = getReddening_params(band=band)
-    R = R - (alpha*pc0+beta)
+    a,b,c,d, alpha, beta, gamma = getReddening_params(band=band)
     
+    #alpha = a0 + alpha
+    #beta  = b0 + beta
+    Ealpha = 0.002
+    Ebeta = 0.003
+    
+    R = r_w1 - (alpha*pc0+beta)
+    dR = np.sqrt(Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2+Ebeta**2)    
+
     ### Model
     if True:  
         inc__ = np.arange(45,90,0.1)
@@ -247,11 +270,10 @@ def plot_Rinc(ax, R, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
         x_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')     
 
     
-    #if not SigmaR is None and len(SigmaR)>0:
+    if len(dR)>0:
         
-        #Y_err_median = np.mean(SigmaR)
-        #x0=94; y0=-0.5
-        #plt.errorbar([x0], [y0], yerr=[Y_err_median], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
+        x0=47; y0=1.
+        plt.errorbar([x0], [y0], yerr=[np.median(dR)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
         
 
     for tick in ax.xaxis.get_major_ticks():
