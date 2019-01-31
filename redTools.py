@@ -377,6 +377,8 @@ def getBand(inFile, band1 = 'r', band2 = 'w2'):
     v = scaler.var_
     ## z = (x-u)/s
     ##u: mean  s:scale  var=s**2
+    
+    A = pca.explained_variance_ratio_              # The importance of different PCAs components
 
     pca_inv_data = pca.inverse_transform(np.eye(n_comp)) # coefficients to make PCs from features
     p0 = pca_inv_data[0,0]
@@ -389,63 +391,136 @@ def getBand(inFile, band1 = 'r', band2 = 'w2'):
     
     table['Epc0'] = np.sqrt((p0*logWimx_e/s[0])**2+(p1*Ec21w/s[1])**2+(p2*Emu50/s[2])**2)
     
+    #print "u: ", u
+    #print "s: ", s
+    #print "A: ", A
+    #print "pca_inv_data: ", pca_inv_data
+    
+    
     return Reddening, Input, [scaler, pca, AB, cov, rms, table]    
 
 ################################################################# 
-def getReddening_params(band='r'):
+def getReddening_params(band1='r', band2='w2'):
     
     a=0;b=0;c=0;d=0;alpha=0;beta=0;gamma=0
+    Ealpha=0;Ebeta=0 
     
-    if band=='u':
-        a=-0.004
-        b=-0.016
-        c=0.057
-        d=0.473
-        alpha = 0.021
-        beta = -0.158
-        gamma = 2.795
-    if band=='g':
-        a=-0.002
-        b=-0.014
-        c=0.030
-        d=0.346
-        alpha = 0.032
-        beta = -0.101
-        gamma = 2.986
-    if band=='r':
-        a=-0.012246670362774534
-        b=-0.05407500525662107
-        c=0.0688533163088458
-        d=0.6926203745113734
-        alpha = 0.21450808805502947
-        beta = -0.8429893034959123
-        gamma = 3.236026969722756
-    if band=='i':
-        a=-0.001
-        b=-0.011
-        c=0.012
-        d=0.216
-        alpha = 0.042
-        beta = -0.044
-        gamma = 3.186
-    if band=='z':
-        a=-0.001
-        b=-0.009
-        c=0.007
-        d=0.169
-        alpha = 0.044
-        beta = -0.019
-        gamma = 3.286
-    if band=='w1':
-        a=0
-        b=0
-        c=0.005
-        d=0.017
-        alpha = -0.00046700368914050845
-        beta = 0.017647840909221335
-        gamma = 1.775476224213375
+    if band2=='w2':
+        if band1=='u':
+            a= -0.013
+            b= -0.055
+            c= 0.096
+            d= 1.202
+            alpha = 0.392
+            beta = 0.473
+            gamma = 2.935
+            Ealpha = 0.006
+            Ebeta = 0.008
+        if band1=='g':
+            a= -0.013
+            b= -0.056
+            c= 0.081
+            d= 0.873
+            alpha = 0.287
+            beta = -0.424
+            gamma = 3.131
+            Ealpha = 0.004
+            Ebeta = 0.006            
+        if band1=='r':
+            a= -0.012
+            b= -0.054
+            c= 0.069
+            d= 0.692
+            alpha = 0.215
+            beta = -0.843
+            gamma = 3.237
+            Ealpha = 0.004
+            Ebeta = 0.006             
+        if band1=='i':
+            a= -0.012
+            b= -0.055
+            c= 0.051
+            d= 0.586
+            alpha = 0.176
+            beta = -1.071
+            gamma = 3.286
+            Ealpha = 0.004
+            Ebeta = 0.005             
+        if band1=='z':
+            a= -0.011
+            b= -0.055
+            c= 0.023
+            d= 0.474
+            alpha = 0.157
+            beta = -1.174
+            gamma = 3.411
+            Ealpha = 0.004
+            Ebeta = 0.005             
+        if band1=='w1':
+            a= 0.
+            b= 0.
+            c= 0.015
+            d= 0.039
+            alpha = 0.008
+            beta = -0.571
+            gamma = 1.805
+            Ealpha = 0.005
+            Ebeta = 0.006 
     
-    return a,b,c,d, alpha, beta, gamma    
+    elif band2=='w1':
+        if band1=='u':
+            a= -0.015
+            b= -0.050
+            c= 0.139
+            d= 1.181
+            alpha = 0.377
+            beta = 1.005
+            gamma = 2.878
+            Ealpha = 0.006
+            Ebeta = 0.009 
+        if band1=='g':
+            a= -0.015
+            b= -0.055
+            c= 0.100
+            d= 0.813
+            alpha = 0.278
+            beta = 0.133
+            gamma = 3.170
+            Ealpha = 0.004
+            Ebeta = 0.006 
+        if band1=='r':
+            a= -0.014
+            b= -0.053
+            c= 0.079
+            d= 0.623
+            alpha = 0.204
+            beta = -0.273
+            gamma = 3.303
+            Ealpha = 0.003
+            Ebeta = 0.005 
+        if band1=='i':
+            a= -0.013
+            b= -0.051
+            c= 0.062
+            d= 0.513
+            alpha = 0.159
+            beta = -0.496
+            gamma = 3.342
+            Ealpha = 0.003
+            Ebeta = 0.005 
+        if band1=='z':
+            a= -0.011
+            b= -0.045
+            c= 0.049
+            d= 0.402
+            alpha = 0.128
+            beta = -0.597
+            gamma = 3.463
+            Ealpha = 0.003
+            Ebeta = 0.005 
+   
+    
+    return a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta   
 
 ################################################################# 
     

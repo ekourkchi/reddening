@@ -56,7 +56,7 @@ def add_axis(ax, xlim, ylim):
                 tick.label.set_fontsize(12)    
                 
 ########################################################### Begin
-def plot_array(inFile, scatter=False, binned=True, band2='w1'):
+def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     
     R_u, Input_u, T_u  = getBand(inFile, band1 = 'u', band2 = band2)
     R_g, Input_g, T_g  = getBand(inFile, band1 = 'g', band2 = band2)
@@ -94,23 +94,31 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     
     fig = py.figure(figsize=(15, 12), dpi=100)    
     fig.subplots_adjust(wspace=0, top=0.97, bottom=0.07, left=0.06, right=0.98)
-    gs = gridspec.GridSpec(5, 6, height_ratios=[1,1,1,1,1]) 
+    
+    if band2=='w2': 
+        gs = gridspec.GridSpec(5, 6, height_ratios=[1,1,1,1,1]) 
+    else: gs = gridspec.GridSpec(5, 5, height_ratios=[1,1,1,1,1]) 
 
     p = 0
     ####################################################
-    inc_0 = 85
+    inc_0 = 80
     inc_1 = 90
+    
+    if band2=='w2': 
+        band_lst = ['u', 'g','r','i','z','w1']
+    else: band_lst = ['u', 'g','r','i','z']
+    
     for jj in range(5):
         
         
-        for band in ['u', 'g','r','i','z','w1']:
+        for band in band_lst:
             
             xlabel = False; ylabel=False
             #if band=='u': ylabel=True
             if jj==4 and band=='i': xlabel=True
             
             ax = plt.subplot(gs[p]) ; p+=1
-            plot_Rinc(ax, T[band], Input[band], inc_lim=[inc_0,inc_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band)
+            plot_Rinc(ax, T[band], Input[band], inc_lim=[inc_0,inc_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band, band2=band2)
             yticks = ax.yaxis.get_major_ticks()
             if band!='u': yticks[-1].label1.set_visible(False)
             if jj!=4: plt.setp(ax.get_xticklabels(), visible=False)
@@ -129,15 +137,15 @@ def plot_array(inFile, scatter=False, binned=True, band2='w1'):
     ax.set_yticks([])
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')    
-    ax.annotate(r'$A_{w2}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
+    ax.annotate(r'$A_{'+band2+'}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
     
-    ax.annotate(r'$P_0$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
+    ax.annotate(r'$P_{0,'+band2+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
     
-    fig.savefig("A_w2_P0.png")
+    fig.savefig("A_"+band2+"_P0.png")
     plt.show()
     
 ################################################################## 
-def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r'):
+def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r', band2='w2'):
     
     pgc     = Input[0]
     r_w1    = Input[1]
@@ -166,15 +174,31 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     Er_w1 = Er_w1[index]
     Epc0  = Epc0[index]
     
-    a,b,c,d, alpha, beta, gamma = getReddening_params(band=band)
-    
-    #alpha = a0 + alpha
-    #beta  = b0 + beta
-    Ealpha = 0.002
-    Ebeta = 0.003
+    a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
     
     R = r_w1 - (alpha*pc0+beta)
     dR = np.sqrt(Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2+Ebeta**2)
+
+
+    ### Model
+    if True:  
+        pc0__ = np.arange(-4.1,4.1,0.1)
+        
+        N = len(pc0__)
+        r_min = np.zeros(N)
+        r_max = np.zeros(N)
+        for ii in range(N):
+            
+            r_lst = []
+            for inc_ in np.arange(inc_lim[0], inc_lim[1], 1):
+                    q2 = 10**(-1.*gamma)
+                    r = log_a_b(inc_, q2)*(a*pc0__[ii]**3+b*pc0__[ii]**2+c*pc0__[ii]+d)
+                    r_lst.append(r)
+            r_min[ii] = np.min(r_lst)
+            r_max[ii] = np.max(r_lst)
+        if band!='w1': 
+            ax.fill_between(pc0__, r_min, r_max, alpha=0.30, facecolor=color)
+
 
     if scatter:
         ax.plot(pc0, R, 'o', color='black', markersize=1, alpha=0.42)
@@ -274,6 +298,6 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
 
 
 
-plot_array('ESN_HI_catal.csv', scatter=True, binned=True, band2='w2')     
+plot_array('ESN_HI_catal.csv', scatter=True, binned=True, band2='w1')     
 
 

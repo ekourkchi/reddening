@@ -141,7 +141,7 @@ y = np.linspace(-5,5,50)
 x = a0*y+b0
 ax.plot(x,y, 'k--')
 
-ax.set_ylabel('$P_0$', fontsize=15, labelpad=7)
+ax.set_ylabel('$P_{0,'+band2+'}$', fontsize=15, labelpad=7)
 add_axis(ax,[-2,2],[-4.2,4.2])
 plt.setp(ax.get_xticklabels(), visible=False)
 lns = [p1, p2, p3]
@@ -184,7 +184,7 @@ ax.plot(x,y, 'k--')
 
 add_axis(ax,[-2,2],[26.8,19.2])
 plt.setp(ax.get_xticklabels(), visible=False)
-ax.set_ylabel(r'$\langle \mu \rangle_e$', fontsize=15, labelpad=7)
+ax.set_ylabel(r'$\langle \mu_2 \rangle_e$', fontsize=15, labelpad=7)
 
 delta = np.abs(r_w1_-(a0*mu50_+b0))
 rms = np.sqrt(np.mean(np.square(delta)))
