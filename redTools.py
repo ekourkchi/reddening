@@ -46,7 +46,7 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
     
     return z_scaler, pca_trafo
 ################################################################# 
-def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
+def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100]):
     
     ###inFile  = 'ESN_HI_catal.csv'
     table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
@@ -70,6 +70,12 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False):
     table = trim(table, index)
 
     index, = np.where(table['Wba']>0.01)
+    table = trim(table, index)
+    
+    index, = np.where(table['inc']>=inc_lim[0])
+    table = trim(table, index)
+    
+    index, = np.where(table['inc']<inc_lim[1])
     table = trim(table, index)
     
     table['c21w'] = table['m21'] - table[band2]

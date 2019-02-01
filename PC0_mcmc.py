@@ -120,12 +120,15 @@ def lnprob(theta, inc, R, pc0):
         return -np.inf    
     return lp + lnlike(theta, inc, R, pc0)
 
+npz_file = "PC0_mcmc_"+band1+"_"+band2+".npz"
 
-if True:
-        if band1!='w1': 
-            ndim, nwalkers = 7, 200
-        else: 
-            ndim, nwalkers = 5, 200
+if band1!='w1': 
+    ndim, nwalkers = 7, 200
+else: 
+    ndim, nwalkers = 5, 200
+
+if True:    ## MCMC part
+
 
         p0 = [np.random.randn(ndim) for i in range(nwalkers)]
 
@@ -139,10 +142,17 @@ if True:
 
         ## removing the first 1000 samples
         samples = sampler.chain[:, 2000:, :].reshape((-1, ndim))
+        
+        np.savez_compressed(npz_file, array=samples)
 
         
-        
+
+if True:    ## Ploting part
 ############################### Cleaning output
+        
+        loaded = np.load(npz_file)
+        samples = loaded['array']
+        
 
         if band1!='w1': 
             samples[:,4]+= a0
@@ -166,7 +176,7 @@ if True:
 
         if band1!='w1': 
             truths=[a[0],b[0],c[0],d[0],alpha[0],beta[0],gamma[0]]
-            fig = corner.corner(samples, labels=["$A_"+band1+"$","$B_"+band1+"$", "$C_"+band1+"$", "$D_"+band1+"$",r"$\alpha_"+band1+"$", r"$\beta_"+band1+"$", r"$\theta_"+band1+"$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+            fig = corner.corner(samples, labels=["$C_{3,"+band1+"}$","$C_{2,"+band1+"}$", "$C_{1,"+band1+"}$", "$C_{0,"+band1+"}$",r"$\alpha_"+band1+"$", r"$\beta_"+band1+"$", r"$\theta_"+band1+"$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 
@@ -174,7 +184,7 @@ if True:
         
         else:
             truths=[c[0],d[0],alpha[0],beta[0],gamma[0]]
-            fig = corner.corner(samples, labels=["$C_{"+band1+"}$", "$D_{"+band1+"}$",r"$\alpha_{"+band1+"}$", r"$\beta_{"+band1+"}$", r"$\theta_{"+band1+"}$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+            fig = corner.corner(samples, labels=["$C_{1,"+band1+"}$", "$C_{0,"+band1+"}$",r"$\alpha_{"+band1+"}$", r"$\beta_{"+band1+"}$", r"$\theta_{"+band1+"}$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 

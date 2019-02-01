@@ -96,8 +96,8 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     fig.subplots_adjust(wspace=0, top=0.97, bottom=0.07, left=0.06, right=0.98)
     
     if band2=='w2': 
-        gs = gridspec.GridSpec(5, 6, height_ratios=[1,1,1,1,1]) 
-    else: gs = gridspec.GridSpec(5, 5, height_ratios=[1,1,1,1,1]) 
+        gs = gridspec.GridSpec(4, 6, height_ratios=[1,1,1,1]) 
+    else: gs = gridspec.GridSpec(4, 5, height_ratios=[1,1,1,1]) 
 
     p = 0
     ####################################################
@@ -108,7 +108,7 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
         band_lst = ['u', 'g','r','i','z','w1']
     else: band_lst = ['u', 'g','r','i','z']
     
-    for jj in range(5):
+    for jj in range(4):
         
         
         for band in band_lst:
@@ -121,7 +121,7 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
             plot_Rinc(ax, T[band], Input[band], inc_lim=[inc_0,inc_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band, band2=band2)
             yticks = ax.yaxis.get_major_ticks()
             if band!='u': yticks[-1].label1.set_visible(False)
-            if jj!=4: plt.setp(ax.get_xticklabels(), visible=False)
+            if jj!=3: plt.setp(ax.get_xticklabels(), visible=False)
             if band!='u': plt.setp(ax.get_yticklabels(), visible=False)  
               
         
@@ -298,6 +298,6 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
 
 
 
-plot_array('ESN_HI_catal.csv', scatter=True, binned=True, band2='w1')     
+plot_array('ESN_HI_catal.csv', scatter=True, binned=True, band2='w2')     
 
 

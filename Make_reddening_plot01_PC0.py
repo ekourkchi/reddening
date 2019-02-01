@@ -62,8 +62,10 @@ def plot_Band(ax, band1='r', band2='w1'):
     inFile  = 'ESN_HI_catal.csv'
     scaler, pca, AB, cov, rms = faceON_pca(inFile, band1=band1, band2=band2)
     
+    inc_lim = [50,60]
+    #table = getTable(inFile, band1=band1, band2=band2, faceOn=False, inc_lim=inc_lim)
     table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
-
+                     
     text1 = '\overline{'+band1+'}-\overline{W}1'            # example: cr-W1
        
     if band2=='w1':
@@ -77,7 +79,7 @@ def plot_Band(ax, band1='r', band2='w1'):
     pgc = table['pgc']
     logWimx = table['logWimx']
     logWimx_e = table['logWimx_e']
-    inc = table['inc']
+    inc = table['inc']*0.+40.
     r_w1 = table['r_w1']
     c21w = table['c21w'] 
     Er_w1 = table['Er_w1']
@@ -110,25 +112,34 @@ def plot_Band(ax, band1='r', band2='w1'):
     d = pd.DataFrame.from_dict(data)
     corr = d.corr()
     
-    a0, b0 = AB[0], AB[1]
-    y = np.linspace(-5,5,50)
-    x = a0*y+b0
-    ax.plot(x,y, 'k--')
-
+    a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+    a0, b0 = alpha, beta
+    ae, be = Ealpha, Ebeta    
+  
+    ## Correction for the inclination dependent part of reddening
+    q2 = 10**(-1.*theta)
+    r_w1 -= log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
+    
+    delta = np.abs(r_w1-(a0*pc0+b0))
+    rms = np.sqrt(np.median(np.square(delta)))
     #########################################################################  
 
     for i in range(len(pgc)):
-        if c21w[i]<1  :
-            p1, = ax.plot(r_w1[i], pc0[i], 'b.', markersize=7, alpha=0.7, label=r"$"+text2+" < 1$")
         if c21w[i]>=1 and c21w[i]< 3:
-            p2, = ax.plot(r_w1[i], pc0[i], 'g.', markersize=7, alpha=0.7, label=r"$1 < "+text2+" < 3$")  
+            p2, = ax.plot(r_w1[i], pc0[i], 'g.', markersize=7, alpha=0.4, label=r"$1 < "+text2+" < 3$")  
+        if c21w[i]<1  :
+            p1, = ax.plot(r_w1[i], pc0[i], 'b.', markersize=7, alpha=0.4, label=r"$"+text2+" < 1$")
         if c21w[i]>=3:
-            p3, = ax.plot(r_w1[i], pc0[i], 'r.', markersize=7, alpha=0.7, label=r"$3 < "+text2+"$")   
-        
-    ax.set_xlabel('$'+text1+'\/\/ [mag]$', fontsize=16, labelpad=7)
+            p3, = ax.plot(r_w1[i], pc0[i], 'r.', markersize=7, alpha=0.4, label=r"$3 < "+text2+"$")   
+
+    y = np.linspace(-5,5,50)
+    x = a0*y+b0
+    ax.plot(x,y, 'k--')
+    
+    ax.set_xlabel('$\gamma_{'+band1+','+band2+'}^{(o)}\/\/ [mag]$', fontsize=16, labelpad=7)
     
     if band1 in ['u','i']:
-       ax.set_ylabel('$P_0$', fontsize=16, labelpad=7)
+       ax.set_ylabel('$P_{0,'+band2+'}$', fontsize=16, labelpad=7)
     
     
     rw_lim = [-2.2,1.8]
@@ -154,22 +165,20 @@ def plot_Band(ax, band1='r', band2='w1'):
     
     
     x0 = 0.45*Xlm[0]+0.55*Xlm[1]
-    y0 = 0.60*Ylm[0]+0.40*Ylm[1]
-    ax.text(x0,y0, r'$\alpha=$'+'%.2f'%a0+'$\pm$'+'%.2f'%np.sqrt(cov[0][0]), fontsize=14, color='k')
-
     y0 = 0.70*Ylm[0]+0.30*Ylm[1]
-    b = b0 # a0*2.5+b0
-    be = np.sqrt(cov[1][1]) #  np.sqrt(cov[0][0]*(2.5**2)+cov[1][1])
-    ax.text(x0,y0, r'$\beta=$'+'%.2f'%b+'$\pm$'+'%.2f'%be, fontsize=14, color='k')  
+    ax.text(x0,y0, r'$\alpha=$'+'%.2f'%a0+'$\pm$'+'%.2f'%ae, fontsize=14, color='k')
+
+    y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+    ax.text(x0,y0, r'$\beta=$'+'%.2f'%b0+'$\pm$'+'%.2f'%be, fontsize=14, color='k')  
     
 
     Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
-    y0 = 0.80*Ylm[0]+0.20*Ylm[1]
+    y0 = 0.90*Ylm[0]+0.10*Ylm[1]
     ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=14, color='k')    
         
-    y0 = 0.9*Ylm[0]+0.10*Ylm[1]
-    ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['pc0'], fontsize=14, color='k')    
-    
+    y0 = 0.6*Ylm[0]+0.40*Ylm[1]
+    #ax.text(x0,y0, r''+"%.0f" % (inc_lim[0])+'$^o$'+'$< inc. <$'+"%.0f" % (inc_lim[1])+'$^o$', fontsize=14, color='k')    
+    ax.text(x0,y0, r'$ inc. < 45^o$', fontsize=14, color='k')  
 
     Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
     x0 = 0.9*Xlm[0]+0.1*Xlm[1]
