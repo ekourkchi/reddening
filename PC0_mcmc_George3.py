@@ -80,9 +80,14 @@ def nll_fn2(X_train, Y_train, Epc0, noise2):
         l1 = np.exp(theta[0])
         l2 = np.exp(theta[1])
         sigma = np.exp(theta[2])
-        yerr = np.diagonal(np.sqrt(noise2))
         
-        kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+        yerr = np.diagonal(np.sqrt(noise2))+theta[3]
+              
+        #kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+        kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+        #kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])* kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+        
+        
         gp = george.GP(kernel)
         gp.compute(X_train, yerr)
         
@@ -104,9 +109,11 @@ def lnlike(theta, inc, R, pc0, Epc0, noise2):
     l1 = np.exp(theta[0])
     l2 = np.exp(theta[1])
     sigma = np.exp(theta[2])
-    yerr = np.diagonal(np.sqrt(noise2))
+    yerr = np.diagonal(np.sqrt(noise2))+theta[3]
     
-    kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+    ##kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+    kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    
     gp = george.GP(kernel)
     gp.compute(X, yerr)
     
@@ -119,6 +126,8 @@ def lnprior(theta):
     l1 = theta[0]
     l2 = theta[1]
     sigma = theta[2]
+    
+    err = theta[3]
 
     #if l1>-6: return -np.inf 
     #if l2<-6: return -np.inf 
@@ -194,10 +203,10 @@ y = R
 start_time = time.time()
 
 ### Maximum Likelihood
-result = minimize(nll_fn2(X, y, Epc0, noise2), [1, 1, 1], 
-               bounds=((None, None), (None, None), (None, None)),
-               method='L-BFGS-B')
-print result
+#result = minimize(nll_fn2(X, y, Epc0, noise2), [1, 1, 1, 0.1], 
+               #bounds=((None, None), (None, None), (None, None), (0.01, 0.5)),
+               #method='L-BFGS-B')
+#print result
 
 
 
@@ -207,13 +216,14 @@ def esnRand():
     l1 = np.random.randn()
     l2 = np.random.randn()
     sigma = np.random.randn()
-    return np.asarray([l1, l2, sigma])
+    err = 0.5*np.random.randn()
+    return np.asarray([l1, l2, sigma, err])
 
 npz_file = "PC0_mcmc_"+band1+"_"+band2+".George3.npz"
 
-if False:    ## MCMC part
+if True:    ## MCMC part
 
-        ndim, nwalkers = 3, 10
+        ndim, nwalkers = 4, 10
         p0 = [esnRand() for i in range(nwalkers)]
 
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(inc, R, pc0, Epc0, noise2))
@@ -229,11 +239,11 @@ if False:    ## MCMC part
             samples = data_trim(ndim, i, [T[i][0]-3*T[i][2],T[i][0]+3*T[i][1]], samples)
         
       
-        l1,l2,sigma = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
+        l1,l2,sigma, err = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
         
 
-        truths=[l1[0],l2[0],sigma[0]]
-        fig = corner.corner(samples, labels=["$log(\ell^2_0)$", "$log(\ell^2_1)$", r"$log(\sigma^2_f)$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+        truths=[l1[0],l2[0],sigma[0], err[0]]
+        fig = corner.corner(samples, labels=["$log(\ell^2_0)$", "$log(\ell^2_1)$", r"$log(\sigma^2_f)$", "Error"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 
