@@ -80,14 +80,11 @@ def nll_fn2(X_train, Y_train, Epc0, noise2):
         l1 = np.exp(theta[0])
         l2 = np.exp(theta[1])
         sigma = np.exp(theta[2])
-        
         yerr = np.diagonal(np.sqrt(noise2))+theta[3]
-              
-        #kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
-        kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
-        #kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])* kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
         
-        
+        kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+        ##kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+
         gp = george.GP(kernel)
         gp.compute(X_train, yerr)
         
@@ -109,7 +106,8 @@ def lnlike(theta, inc, R, pc0, Epc0, noise2):
     l1 = np.exp(theta[0])
     l2 = np.exp(theta[1])
     sigma = np.exp(theta[2])
-    yerr = np.diagonal(np.sqrt(noise2))+theta[3]
+    err = theta[3]
+    yerr = np.diagonal(np.sqrt(noise2))+err
     
     ##kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
     kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
@@ -123,15 +121,12 @@ def lnlike(theta, inc, R, pc0, Epc0, noise2):
 
 def lnprior(theta):
     
-    l1 = theta[0]
-    l2 = theta[1]
-    sigma = theta[2]
-    
+    l1 = np.exp(theta[0])
+    l2 = np.exp(theta[1])
+    sigma = np.exp(theta[2])
     err = theta[3]
 
-    #if l1>-6: return -np.inf 
-    #if l2<-6: return -np.inf 
-    #if sigma>1. or sigma<-1: return -np.inf 
+    if err>0.5 or err<0: return -np.inf 
 
     return 0.0
 
@@ -180,15 +175,25 @@ r_w1    = Input[1]
 pc0     = Input[2]
 inc     = Input[3]
 
-a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
-R = r_w1-(alpha*pc0+beta)
-
 AB = T[2] ; table = T[5]
 a0, b0 = AB[0], AB[1]
 
 Er_w1 = table['Er_w1']
 Epc0  = table['Epc0']
 Einc  = table['inc_e']
+
+#indx = np.where(pc0>-2)
+#r_w1 = r_w1[indx]
+#pc0 = pc0[indx]
+#inc = inc[indx]
+#Er_w1 = Er_w1[indx]
+#Epc0 = Epc0[indx]
+#Einc = Einc[indx]
+
+
+a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+R = r_w1-(alpha*pc0+beta)
+
 
 N = len(pc0)
 dR2 = Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2
@@ -207,7 +212,6 @@ start_time = time.time()
                #bounds=((None, None), (None, None), (None, None), (0.01, 0.5)),
                #method='L-BFGS-B')
 #print result
-
 
 
 
