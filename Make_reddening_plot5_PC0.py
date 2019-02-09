@@ -134,7 +134,8 @@ def plot_array(inFile, scatter=False, binned=True):
     
     #ax.annotate(r'$inclination \/ [deg]$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
     
-    ##fig.savefig("A_"+band2+"_P0.png")
+    fig.savefig("P0_w12.eps")
+    fig.savefig("P0_w12.png")
     plt.show()
     
 ################################################################## 
@@ -279,9 +280,9 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
        
 
     for tick in ax.xaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
     for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
 
 ###########################################################
 

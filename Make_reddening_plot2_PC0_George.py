@@ -19,6 +19,8 @@ from matplotlib import gridspec
 import sklearn.datasets as ds
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+import george
+from george import kernels
 
 from redTools import *
 from Kcorrect import *
@@ -105,23 +107,23 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     PC0_1 = 4
     
     if band2=='w2': 
-        band_lst = ['u', 'g','r','i','z','w1']
-    else: band_lst = ['u', 'g','r','i','z']
+        band1_lst = ['u', 'g','r','i','z','w1']
+    else: band1_lst = ['u', 'g','r','i','z']
     
     for jj in range(4):
 
-        for band in band_lst:
+        for band1 in band1_lst:
             
             xlabel = False; ylabel=False
-            #if band=='u': ylabel=True
-            if jj==3 and band=='i': xlabel=True
+            #if band1=='u': ylabel=True
+            if jj==3 and band1=='i': xlabel=True
             
             ax = plt.subplot(gs[p]) ; p+=1
-            plot_Rinc(ax, T[band], Input[band], pc0_lim=[PC0_0,PC0_1], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band, band2=band2)
+            plot_Rinc(ax, T[band1], Input[band1], pc0_lim=[PC0_0,PC0_1], color=dye[band1], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band1=band1, band2=band2)
             yticks = ax.yaxis.get_major_ticks()
-            if band!='u': yticks[-1].label1.set_visible(False)
+            if band1!='u': yticks[-1].label1.set_visible(False)
             if jj!=3: plt.setp(ax.get_xticklabels(), visible=False)
-            if band!='u': plt.setp(ax.get_yticklabels(), visible=False)  
+            if band1!='u': plt.setp(ax.get_yticklabels(), visible=False)  
               
         
         PC0_0-=2
@@ -140,11 +142,11 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     
     ax.annotate(r'$inclination \/ [deg]$', (0.47,0.02), xycoords='figure fraction', size=16, color='black')
     
-    fig.savefig("A_"+band2+"_inc.png")
+    fig.savefig("A_"+band2+"_inc_GPgrg.png")
     plt.show()
     
 ################################################################## 
-def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r', band2='w2'):
+def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band1='r', band2='w2'):
     
     pgc     = Input[0]
     r_w1    = Input[1]
@@ -156,6 +158,48 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     
     Er_w1 = table['Er_w1']
     Epc0  = table['Epc0']
+    Einc  = table['inc_e']    
+    
+    #if band1=='u':
+        #indx = np.where(pc0>-2)
+        #r_w1 = r_w1[indx]
+        #pc0 = pc0[indx]
+        #inc = inc[indx]
+        #Er_w1 = Er_w1[indx]
+        #Epc0 = Epc0[indx]
+        #Einc = Einc[indx]
+
+    a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+    R = r_w1-(alpha*pc0+beta)
+    A = R
+    y = R
+        
+    N = len(pc0)
+    dR2 = Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2
+    noise2 = dR2*np.eye(N)
+
+    X = np.ones(shape = (2,N))
+    X[0] = pc0
+    X[1] = inc
+    X = X.T
+    
+    if band1=='u': 
+        theta = [3.668874  , 6.50517701, 0.59288974, 0.16381692]
+        #theta = [3.46461231, 6.48432144, 0.3066739 , 0.1600347 ]   ## pc0>-2
+    if band1=='g': theta = [ 3.15024649,  5.59633583, -0.54934107,  0.10942759]
+    if band1=='r': theta = [3.00712491,  5.28702113, -1.04442791, 0.09683042]
+    if band1=='i': theta = [ 2.80674111,  4.97871648, -1.58905037,  0.09901532]
+    if band1=='z': theta = [ 2.7634206 ,  4.64052849, -2.06768134,  0.09825892]
+    if band1=='w1': theta = [ 2.68218476e+00,  1.02518650e+01, -4.78962522e+00,  1.00000000e-02]
+    
+    l1 = np.exp(theta[0])
+    l2 = np.exp(theta[1])
+    sigma = np.exp(theta[2])
+    yerr = np.diagonal(np.sqrt(noise2))+theta[3]
+    kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+
+    gp = george.GP(kernel)
+    gp.compute(X, yerr)
     
     index = np.where(pc0>=pc0_lim[0])
     r_w1 = r_w1[index]
@@ -165,7 +209,8 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     Er_w1 = Er_w1[index]
     Epc0  = Epc0[index]
 
-    index = np.where(pc0<pc0_lim[1])
+
+    index = np.where(pc0<=pc0_lim[1])
     r_w1 = r_w1[index]
     pc0   = pc0[index]
     pgc   = pgc[index]
@@ -173,33 +218,36 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     Er_w1 = Er_w1[index]
     Epc0  = Epc0[index]
     
-    a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
     
     R = r_w1 - (alpha*pc0+beta)
     dR = np.sqrt(Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2+Ebeta**2)    
 
     ### Model
     if True:  
-        inc__ = np.arange(45,90,0.1)
+        _pc, _inc = np.linspace(pc0_lim[0], pc0_lim[1],20), np.linspace(45,90,20)
+        _pc, _inc = np.meshgrid(_pc, _inc)
+        X_ = np.c_[_pc.ravel(), _inc.ravel()]
+        _A, var_A = gp.predict(A, X_, return_var=True)     
+        _A = _A.reshape(_pc.shape)
+        
+        inc__ = np.linspace(45,90,20)
         
         N = len(inc__)
         r_min = np.zeros(N)
         r_max = np.zeros(N)
+        r_med = np.zeros(N)
         for ii in range(N):
             
-            r_lst = []
-            for pc0_ in np.arange(pc0_lim[0], pc0_lim[1], 0.1):
-                    q2 = 10**(-1.*gamma)
-                    r = log_a_b(inc__[ii], q2)*(a*pc0_**3+b*pc0_**2+c*pc0_+d)
-                    r_lst.append(r)
-            r_min[ii] = np.min(r_lst)
-            r_max[ii] = np.max(r_lst)
-        if band!='w1': 
-            ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
+            indx = np.where(_inc==inc__[ii])
+            r_min[ii] = np.min(_A[indx])
+            r_max[ii] = np.max(_A[indx])
+            r_med[ii] = np.median(_A[indx])
+        #if band1!='w1': 
+        ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
         
     if scatter:
         ax.plot(inc, R, 'o', color='black', markersize=1, alpha=0.4)
-  
+        
     if binned:
         xl = []
         yl= []
@@ -236,16 +284,19 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
                 xl.append(np.median(x))
                 yl.append(np.median(y))
                 yel.append(np.std(y))
-            
+
+        
+    ### Fitting a curve
+    ax.plot(inc__, r_med, 'k--')             
             
     ax.tick_params(which='major', length=6, width=1.5, direction='in')
     ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
     ax.minorticks_on()
     
     #ax.text(45,0.8, r''+"%.0f" % (c21w_[0])+'$< c21W_1 <'+"%.0f" % (c21w_[1])+'$', color=color, fontsize=11)
-    ax.text(52,-0.7, r''+"%.1f" % (pc0_lim[0])+'$< P_{0,'+band2+'} <$'+"%.1f" % (pc0_lim[1]), fontsize=14)
+    ax.text(52,-0.7, r''+"%.1f" % (pc0_lim[0])+r'$\leq P_{0,'+band2+'} <$'+"%.1f" % (pc0_lim[1]), fontsize=14)
     
-    ax.text(47,1.4, band, fontsize=14, color=color)
+    ax.text(47,1.4, band1, fontsize=14, color=color)
 
     ax.set_ylim([-0.9,1.7])     
     ax.set_xlim([41,99])    

@@ -51,9 +51,9 @@ def add_axis(ax, xlim, ylim):
     x_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
     
     for tick in ax.xaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
     for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(12)    
+                tick.label.set_fontsize(14)    
                 
 ########################################################### Begin
 def plot_array(inFile, scatter=False, binned=True, band2='w2'):
@@ -92,7 +92,7 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     
     dye = {"u":"blue","g":"green","r":"red","i":"orange","z":"maroon","w1":"purple" }
     
-    fig = py.figure(figsize=(15, 12), dpi=100)    
+    fig = py.figure(figsize=(17, 12), dpi=100)    
     fig.subplots_adjust(wspace=0, top=0.97, bottom=0.07, left=0.06, right=0.98)
     
     if band2=='w2': 
@@ -255,7 +255,7 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     ax.minorticks_on()
     
     #ax.text(45,0.8, r''+"%.0f" % (c21w_[0])+'$< c21W_1 <'+"%.0f" % (c21w_[1])+'$', color=color, fontsize=11)
-    ax.text(-1.2,-0.4, r''+"%.0f" % (inc_lim[0])+'$< inc. <$'+"%.0f" % (inc_lim[1]), fontsize=13)
+    ax.text(-1.2,-0.4, r''+"%.0f" % (inc_lim[0])+'$< inc. <$'+"%.0f" % (inc_lim[1]), fontsize=14)
     
     ax.text(-3,1.3, band, fontsize=14, color=color)
 
@@ -290,9 +290,9 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
         
 
     for tick in ax.xaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
     for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
 
 ###########################################################
 

@@ -134,7 +134,8 @@ def plot_array(inFile, scatter=False, binned=True):
     
     #ax.annotate(r'$inclination \/ [deg]$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
     
-    ##fig.savefig("A_"+band2+"_P0.png")
+    fig.savefig("A_w12_inc.eps")
+    fig.savefig("A_w12_inc.png")
     plt.show()
     
 ################################################################## 
@@ -181,9 +182,13 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
             INC.append(inc[i])
             dA.append(A2[i]-myDic[pgc[i]][1])
     
-
+    dA = np.asarray(dA)
     if scatter:
         ax.plot(INC, dA, 'o', color='black', markersize=1, alpha=0.15)
+        if mode==1:
+            
+            rms = np.sqrt(np.mean(dA**2))
+            ax.text(46,-0.012, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 
     if binned:
         xl = []
@@ -229,7 +234,7 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
 
     ax.plot([40,100], [0,0], 'k:')
     
-    if xlabel: ax.set_xlabel(r'$inclination \/ [deg]$', fontsize=16)
+    if xlabel: ax.set_xlabel(r'$inclination \/ [deg]$', fontsize=16, labelpad=7)
     if mode==1:
         if ylabel: ax.set_ylabel(r'$A^{(i)}_{W2}-[A^{(i)}_{W2}]$', fontsize=16) 
         ax.text(47,0.02, band, fontsize=14, color=color)
@@ -266,9 +271,9 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
         
 
     for tick in ax.xaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
     for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(12) 
+                tick.label.set_fontsize(14) 
 
 ###########################################################
 

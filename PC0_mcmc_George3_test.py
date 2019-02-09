@@ -72,7 +72,7 @@ def nll_fn2(X_train, Y_train, Epc0, noise2):
     
     X = X_train.T
     pc0 = X[0]
-    R = Y_train
+    D = Y_train
     N = len(pc0)
 
     def step(theta):
@@ -82,61 +82,19 @@ def nll_fn2(X_train, Y_train, Epc0, noise2):
         sigma = np.exp(theta[2])
         yerr = np.diagonal(np.sqrt(noise2))+theta[3]
         
-        kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
-        ##kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+        ##kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+        kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
 
         gp = george.GP(kernel)
         gp.compute(X_train, yerr)
         
         #sys.exit()
         # Compute determinant via Cholesky decomposition
-        return -gp.lnlikelihood(R)
+        return -gp.lnlikelihood(D)
     return step
 
 ################################################################# 
 
-def lnlike(theta, inc, R, pc0, Epc0, noise2):
-    
-    N = len(pc0)
-    X = np.ones(shape = (2,N))
-    X[0] = pc0
-    X[1] = inc
-    X = X.T
-
-    l1 = np.exp(theta[0])
-    l2 = np.exp(theta[1])
-    sigma = np.exp(theta[2])
-    err = theta[3]
-    yerr = np.diagonal(np.sqrt(noise2))+err
-    
-    ##kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
-    kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
-    
-    gp = george.GP(kernel)
-    gp.compute(X, yerr)
-    
-    return gp.lnlikelihood(R)
-
-################################################################# 
-
-def lnprior(theta):
-    
-    l1 = np.exp(theta[0])
-    l2 = np.exp(theta[1])
-    sigma = np.exp(theta[2])
-    err = theta[3]
-
-    if err>0.5 or err<0: return -np.inf 
-
-    return 0.0
-
-################################################################# 
-def lnprob(theta, inc, R, pc0, Epc0, noise2):
-    
-    lp = lnprior(theta)
-    if not np.isfinite(lp) :
-        return -np.inf    
-    return lp + lnlike(theta, inc, R, pc0, Epc0, noise2)
 
 ################################################################# 
 def data_trim(ndim, ind, limits, samples):
@@ -182,79 +140,36 @@ Er_w1 = table['Er_w1']
 Epc0  = table['Epc0']
 Einc  = table['inc_e']
 
-#indx = np.where(pc0>-2)
-#r_w1 = r_w1[indx]
-#pc0 = pc0[indx]
-#inc = inc[indx]
-#Er_w1 = Er_w1[indx]
-#Epc0 = Epc0[indx]
-#Einc = Einc[indx]
-
 
 a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+
+q2 = 10**(-1.*gamma)
+F = log_a_b(inc, q2)
+dF2 = Elogab2(inc, q2, Einc)
+A = F*(a*pc0**3+b*pc0**2+c*pc0+d)
+dA = np.sqrt(dF2*(a*pc0**3+b*pc0**2+c*pc0+d)**2+(F*(3*a*pc0**2+2*b*pc0+c)*Epc0)**2)
+
+
 R = r_w1-(alpha*pc0+beta)
 
+D = R - A
 
 N = len(pc0)
 dR2 = Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2
-noise2 = dR2*np.eye(N)
+noise2 = (dR2+dA**2)*np.eye(N)
 
 X = np.ones(shape = (2,N))
 X[0] = pc0
 X[1] = inc
 X = X.T
-y = R
+y = D
 
 start_time = time.time()
 
 ### Maximum Likelihood
-#result = minimize(nll_fn2(X, y, Epc0, noise2), [1, 1, 1, 0.1], 
-               #bounds=((None, None), (None, None), (None, None), (0.01, 0.5)),
-               #method='L-BFGS-B')
-#print result
+result = minimize(nll_fn2(X, y, Epc0, noise2), [1, 1, 1, 0.1], 
+               bounds=((None, None), (None, None), (None, None), (0.01, 0.5)),
+               method='L-BFGS-B')
+print result
 
-
-
-def esnRand():
-    
-    l1 = np.random.randn()
-    l2 = np.random.randn()
-    sigma = np.random.randn()
-    err = 0.5*np.random.randn()
-    return np.asarray([l1, l2, sigma, err])
-
-npz_file = "PC0_mcmc_"+band1+"_"+band2+".George3.npz"
-
-if True:    ## MCMC part
-
-        ndim, nwalkers = 4, 32
-        p0 = [esnRand() for i in range(nwalkers)]
-
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(inc, R, pc0, Epc0, noise2))
-
-        sampler.run_mcmc(p0, 5000)
-        samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
-        
-        np.savez_compressed(npz_file, array=samples)
-        
-        T = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
-        
-        for i in range(ndim):
-            samples = data_trim(ndim, i, [T[i][0]-3*T[i][2],T[i][0]+3*T[i][1]], samples)
-        
-      
-        l1,l2,sigma, err = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
-        
-
-        truths=[l1[0],l2[0],sigma[0], err[0]]
-        fig = corner.corner(samples, labels=["$log(\ell^2_0)$", "$log(\ell^2_1)$", r"$log(\sigma^2_f)$", "Error"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
-                    levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
-                    show_titles=True, fill_contours=True, plot_density=True,
-                    scale_hist=False,space=0, 
-                    title_kwargs={"fontsize":15}, title_fmt=".3f")        
-        
-        
-        print("--- %s seconds ---" % (time.time() - start_time))
-        fig.savefig("PC0_mcmc_"+band1+"_"+band2+".George3.png")
-        plt.show()
 
