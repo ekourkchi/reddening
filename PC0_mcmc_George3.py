@@ -125,7 +125,10 @@ def lnprior(theta):
     l2 = np.exp(theta[1])
     sigma = np.exp(theta[2])
     err = theta[3]
-
+    
+    if theta[0]>10: return -np.inf 
+    if theta[1]>10: return -np.inf 
+    if theta[2]>10: return -np.inf 
     if err>0.5 or err<0: return -np.inf 
 
     return 0.0
@@ -254,7 +257,7 @@ if True:    ## MCMC part
                     title_kwargs={"fontsize":15}, title_fmt=".3f")        
         
         
-        print("--- %s seconds ---" % (time.time() - start_time))
+        print("--- %s seconds ---" % (time.time() - start_time)+'   '+band1+' --- '+band2)
         fig.savefig("PC0_mcmc_"+band1+"_"+band2+".George3.png")
         plt.show()
 
