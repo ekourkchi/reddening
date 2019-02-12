@@ -406,6 +406,13 @@ def getBand(inFile, band1 = 'r', band2 = 'w2'):
     return Reddening, Input, [scaler, pca, AB, cov, rms, table]    
 
 ################################################################# 
+def redCorrect(inc, pc0, band1='r', band2='w2'):
+    
+    a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+    
+    return log_a_b(inc, 10**(-1.*theta))*(a*pc0**3+b*pc0**2+c*pc0+d)
+    
+################################################################# 
 def getReddening_params(band1='r', band2='w2'):
     
     a=0;b=0;c=0;d=0;alpha=0;beta=0;gamma=0
@@ -529,7 +536,16 @@ def getReddening_params(band1='r', band2='w2'):
     return a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta   
 
 ################################################################# 
+def george_params(band1='r'):
+    if band1=='u': theta = [3.668874  , 6.50517701, 0.59288974, 0.16381692]
+    if band1=='g': theta = [3.15024649,  5.59633583, -0.54934107,  0.10942759]
+    if band1=='r': theta = [3.00712491,  5.28702113, -1.04442791, 0.09683042]
+    if band1=='i': theta = [2.80674111,  4.97871648, -1.58905037,  0.09901532]
+    if band1=='z': theta = [2.7634206 ,  4.64052849, -2.06768134,  0.09825892]
+    if band1=='w1':theta = [2.68218476e+00,  1.02518650e+01, -4.78962522e+00,  1.00000000e-02]
     
+    return theta
+################################################################# 
     
     
     

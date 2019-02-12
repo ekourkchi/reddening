@@ -39,17 +39,8 @@ rcParams["text.usetex"] = True
 rcParams["text.latex.preamble"] = r"\usepackage{cmbright}"
 
 ################################################################# 
-def george_params(band1='r'):
-    if band1=='u': theta = [3.668874  , 6.50517701, 0.59288974, 0.16381692]
-    if band1=='g': theta = [3.15024649,  5.59633583, -0.54934107,  0.10942759]
-    if band1=='r': theta = [3.00712491,  5.28702113, -1.04442791, 0.09683042]
-    if band1=='i': theta = [2.80674111,  4.97871648, -1.58905037,  0.09901532]
-    if band1=='z': theta = [2.7634206 ,  4.64052849, -2.06768134,  0.09825892]
-    if band1=='w1':theta = [2.68218476e+00,  1.02518650e+01, -4.78962522e+00,  1.00000000e-02]
-    
-    return theta
 ################################################################# 
-def getRMS(inFile, band1 = 'r', band2 = 'w2'):
+def getRMS(inFile, pc0_lim=[0,2], band1 = 'r', band2 = 'w2'):
 
     _, Input, T = getBand('ESN_HI_catal.csv', band1=band1 , band2=band2)
     r_w1    = Input[1]
@@ -88,14 +79,14 @@ def getRMS(inFile, band1 = 'r', band2 = 'w2'):
     A_grg, var_A_grg = gp.predict(R, X, return_var=True)
 
 
-    indx = np.where(-4<=pc0)
+    indx = np.where(pc0_lim[0]<=pc0)
     R = R[indx]
     A_mdl = A_mdl[indx]
     A_grg = A_grg[indx]
     pc0 = pc0[indx]
     inc = inc[indx]
 
-    indx = np.where(pc0<=-2)
+    indx = np.where(pc0<pc0_lim[1])
     R = R[indx]
     A_mdl = A_mdl[indx]
     A_grg = A_grg[indx]
@@ -127,36 +118,93 @@ def getRMS(inFile, band1 = 'r', band2 = 'w2'):
 
     return rms_model, rms_george
 ################################################################# 
+################################################################# 
+def plotRMS(ax, inFile, pc0_lim=[0,2]):
+    
+    X_axis = np.asarray([1,2.5,4,5.5])
 
-X_axis = np.asarray([1,2.5,4,5.5])
+    rms_model, rms_george = getRMS(inFile, band1 = 'u', band2 = 'w2', pc0_lim=pc0_lim)
+    p1, = ax.plot(X_axis-0.5, rms_model, 'bo', label='u')
+    ax.plot(X_axis-0.5, rms_george, 'bo', mfc='none', label='u')
+        
+    rms_model, rms_george = getRMS(inFile, band1 = 'g', band2 = 'w2', pc0_lim=pc0_lim)
+    p2, = ax.plot(X_axis-0.25, rms_model, 'gs', label='g')
+    ax.plot(X_axis-0.25, rms_george, 'gs', mfc='none', label='g')
+
+    rms_model, rms_george = getRMS(inFile, band1 = 'r', band2 = 'w2', pc0_lim=pc0_lim)
+    p3, = ax.plot(X_axis, rms_model, 'r^', label='r')
+    ax.plot(X_axis, rms_george, 'r^', mfc='none', label='r')
+
+    rms_model, rms_george = getRMS(inFile, band1 = 'i', band2 = 'w2', pc0_lim=pc0_lim)
+    p4, = ax.plot(X_axis+0.25, rms_model, 'D', color='orange', label='i')
+    ax.plot(X_axis+0.25, rms_george, 'D', color='orange', mfc='none', label='i')
+
+    rms_model, rms_george = getRMS(inFile, band1 = 'z', band2 = 'w2', pc0_lim=pc0_lim)
+    p5, = ax.plot(X_axis+0.5, rms_model, 'v', color='maroon', label='z')
+    ax.plot(X_axis+0.5, rms_george, 'v', color='maroon', mfc='none', label='z')
+
+
+    ax.plot([1.7,1.7],[0,1],'k:')
+    ax.plot([3.2,3.2],[0,1],'k:')
+    ax.plot([4.7,4.7],[0,1],'k:')
+
+    ax.set_xlim(0.3,6.2)
+    ax.set_ylim(0.03,0.49)
+    
+    ax.minorticks_on()
+    ax.tick_params(which='major', length=7, width=1.5)
+    ax.tick_params(which='minor', length=4, color='#000033', width=1.0)    
+
+    # additional Y-axis (on the right)
+    y_ax = ax.twinx()
+    y_ax.set_ylim(0.03,0.49)
+    y_ax.set_yticklabels([])
+    y_ax.minorticks_on()
+    y_ax.tick_params(which='major', length=7, width=1.5, direction='in')
+    y_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
+    
+    # additional X-axis (on the top)
+    #x_ax = ax.twiny()
+    #x_ax.set_xlim(0.3,6.2)
+    #x_ax.set_xticklabels([])
+    #x_ax.tick_params(which='major', length=7, width=1.5, direction='in')
+    #x_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
+    
+    
+    #plt.xticks([1,2.5,4,5.5])
+    #plt.setp(ax.get_xticklabels(), visible=False)
+    
+    ax.text(2.6,0.4, r''+"%.0f" % (pc0_lim[0])+'$\/ \leq P_0 < \/$'+"%.0f" % (pc0_lim[1]), fontsize=14, color='black', weight='bold')
+    
+    ax.set_ylabel('RMS [mag]', fontsize=14, labelpad=10)
+    
+    if pc0_lim[0]==2:
+        lns = [p1, p2, p3, p4, p5]
+        ax.legend(handles=lns, fontsize=14, bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3, mode="expand", borderaxespad=0.)
+    
+
+################################################################# 
+
 inFile = 'ESN_HI_catal.csv'
-
-fig = py.figure(figsize=(7, 5), dpi=100)    
-ax = fig.add_subplot(111)
-
-rms_model, rms_george = getRMS(inFile, band1 = 'u', band2 = 'w2')
-ax.plot(X_axis, rms_model, 'bo')
-ax.plot(X_axis, rms_george, 'bo', mfc='none')
-    
-rms_model, rms_george = getRMS(inFile, band1 = 'g', band2 = 'w2')
-ax.plot(X_axis+0.15, rms_model, 'gs')
-ax.plot(X_axis+0.15, rms_george, 'gs', mfc='none')
-
-    
-rms_model, rms_george = getRMS(inFile, band1 = 'r', band2 = 'w2')
-ax.plot(X_axis+0.3, rms_model, 'r^')
-ax.plot(X_axis+0.3, rms_george, 'r^', mfc='none')
-
-rms_model, rms_george = getRMS(inFile, band1 = 'i', band2 = 'w2')
-ax.plot(X_axis+0.45, rms_model, 'D', color='orange')
-ax.plot(X_axis+0.45, rms_george, 'D', color='orange', mfc='none')
+fig = py.figure(figsize=(4.5, 9), dpi=100)   
+fig.subplots_adjust(hspace=0, top=0.92, bottom=0.08, left=0.20, right=0.95)
+gs = gridspec.GridSpec(4,1) 
+p = 0
 
 
-rms_model, rms_george = getRMS(inFile, band1 = 'z', band2 = 'w2')
-ax.plot(X_axis+0.6, rms_model, 'v', color='maroon')
-ax.plot(X_axis+0.6, rms_george, 'v', color='maroon', mfc='none')
+for i in [2,0,-2,-4]:
+    ax = plt.subplot(gs[p]) ; p+=1 
+    plotRMS(ax, inFile, pc0_lim=[i,i+2])
 
 
+plt.xticks([1,2.5,4,5.5], ('50-60','60-70','70-80','80-90'), rotation=45)
+ax.tick_params(axis='x', which='minor', bottom=False)
+
+ax.set_xlabel('Inclination range [deg]', fontsize=14, labelpad=10)
+
+
+fig.savefig("compare_rms.png")
+fig.savefig("compare_rms.eps")
 plt.show()
 
     

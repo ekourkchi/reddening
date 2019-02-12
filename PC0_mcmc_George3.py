@@ -126,8 +126,8 @@ def lnprior(theta):
     sigma = np.exp(theta[2])
     err = theta[3]
     
-    if theta[0]>10: return -np.inf 
-    if theta[1]>10: return -np.inf 
+    if theta[0]>10 or theta[0]<0: return -np.inf 
+    if theta[1]>10 or theta[1]<0: return -np.inf 
     if theta[2]>10: return -np.inf 
     if err>0.5 or err<0: return -np.inf 
 
@@ -230,12 +230,12 @@ npz_file = "PC0_mcmc_"+band1+"_"+band2+".George3.npz"
 
 if True:    ## MCMC part
 
-        ndim, nwalkers = 4, 32
+        ndim, nwalkers = 4, 64
         p0 = [esnRand() for i in range(nwalkers)]
 
         sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(inc, R, pc0, Epc0, noise2))
 
-        sampler.run_mcmc(p0, 5000)
+        sampler.run_mcmc(p0, 6000)
         samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
         
         np.savez_compressed(npz_file, array=samples)
