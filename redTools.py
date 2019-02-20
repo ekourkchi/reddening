@@ -20,6 +20,9 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 from collections import OrderedDict
+import random
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.datasets import make_regression
 
 from Kcorrect import *
 ################################################################# 
@@ -568,9 +571,139 @@ def get_w(P0, m21, logWimx, Wba, R50_w2):
     
     return w2
 ################################################################# 
-   
+## Shuffling the input data;
+#################################################################
+def esn_shuffle(array, seed=0):
+        random.seed(seed)
+        random.shuffle(array)
+        return array
+#################################################################   
+def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
+    
+    ### table is a structured array
+    myTable = {}
+    for name in table.dtype.names:
+        myTable[name] = table[name]
+    table = myTable
+    ### table is now a dictionary (hash table)    
+
+    ## u0, g0, r0, i0, z0 are already K-/extinction- corrected
+    pgc     = table['pgc']      # id
+    inc     = table['inc']      # inclination [deg]
+    pc0     = table['pc0']      # main principal component
+    u0      = table['u']
+    g0      = table['g']
+    r0      = table['r']
+    i0      = table['i']
+    z0      = table['z']
+    w1      = table['w1']
+    w2      = table['w2']
+    logWimx = table["logWimx"]  # inclination corrected HI 21 cm linewidth
+    m21     = table["m21"]      # HI 21cm magnitude: m21 = -2.5*np.log10(Flux_21cm)+17.40
+    mu50    = table["mu50"]     # W2 effective surface brightness (corrected for the axial ratio)
+    Wba     = table["Wba"]      # WISE photometry axial ration, i.e. b/a
+    R50     = table["R50_w2"]   # W2 half light radius
+
+    table['u0'] = u0
+    table['g0'] = g0
+    table['r0'] = r0
+    table['i0'] = i0
+    table['z0'] = z0
+    table['w10']= w1
+    
+    ## Reddening corrections
+    u  = u0-redCorrect(inc, pc0, band1='u', band2='w2')
+    g  = g0-redCorrect(inc, pc0, band1='g', band2='w2')
+    r  = r0-redCorrect(inc, pc0, band1='r', band2='w2')
+    i  = i0-redCorrect(inc, pc0, band1='i', band2='w2')
+    z  = z0-redCorrect(inc, pc0, band1='z', band2='w2')
+    w1 = w1-redCorrect(inc, pc0, band1='w1', band2='w2')
+    
+    
+    table['u'] = u
+    table['g'] = g
+    table['r'] = r
+    table['i'] = i
+    table['z'] = z
+    table['w1']= w1
+        
+    table['c21w']  = m21-w2
+    table['g_w2']  = g-w2
+    table['r_w2']  = r-w2
+    table['i_w2']  = i-w2
+    table['z_w2']  = z-w2
+    table['w1_w2'] = w1-w2
+    table['g_r']   = g-r
+    table['r_i']   = r-i
+    table['g_i']   = g-i
+    table['i_z']   = i-z
+    table['r_z']   = r-z
+
+    
+    n = len(table['pgc'])
+    indices = np.arange(n)
+    indices = esn_shuffle(indices, seed=Seed_test)
+    table = trim(table, indices)
+    indices = np.arange(N_test)
+    table_tst = trim(table, indices)
+    indices = np.arange(N_test, n)
+    table_tmp = trim(table, indices)
+
+
+    n = len(table_tmp['pgc'])
+    indices = np.arange(n)
+    indices = esn_shuffle(indices, seed=Seed_cross)
+    table_tmp = trim(table_tmp, indices)
+    indices = np.arange(N_cross)
+    table_cvl = trim(table_tmp, indices)
+    indices = np.arange(N_cross, n)
+    table_trn = trim(table_tmp, indices)
+    
+    return table_tst, table_cvl, table_trn
+#################################################################   
+def ML_data(table, features, output):
+    
+    n = len(features)  # number of features
+    N = len(table['pgc'])   # training
+    X = np.ones(shape = (n,N))
+    for j in range(n):
+        X[j] = table[features[j]]
+        
+    return X.T, table[output]
+#################################################################   
+def esn_RForest(table_tst, table_cvl, table_trn, features, output, \
+    max_depth=2000, n_estimators=1000, max_features=3, \
+        min_samples_leaf=5, bootstrap=True):
+    
+    x_trn, y_trn = ML_data(table_trn, features, output)
+    x_cvl, y_cvl = ML_data(table_cvl, features, output)
+    x_tst, y_tst = ML_data(table_tst, features, output)
+    ################################
+
+    regr = RandomForestRegressor(max_depth=max_depth, n_estimators=n_estimators, \
+        max_features=max_features, min_samples_leaf=min_samples_leaf, \
+            bootstrap=bootstrap)
+
+    regr.fit(x_trn, y_trn)
+    p_y_trn  = regr.predict(x_trn)
+    p_y_cvl  = regr.predict(x_cvl)
+    p_y_tst  = regr.predict(x_tst)
+    
+    return regr, x_trn, y_trn, p_y_trn, x_cvl, y_cvl, p_y_cvl, x_tst, y_tst, p_y_tst
+#################################################################   
     
     
     
     
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+#################################################################   
+
