@@ -638,6 +638,7 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['g_i']   = g-i
     table['i_z']   = i-z
     table['r_z']   = r-z
+    table['g_z']   = g-z
 
     
     n = len(table['pgc'])
@@ -691,19 +692,84 @@ def esn_RForest(table_tst, table_cvl, table_trn, features, output, \
     
     return regr, x_trn, y_trn, p_y_trn, x_cvl, y_cvl, p_y_cvl, x_tst, y_tst, p_y_tst
 #################################################################   
+def predictor(w2, table, regr, features, output, index=0):
     
+    outDict = {}
     
+    M21 = table["m21"][index]
+    M0  = table["logWimx"][index]
+    WBA = table["Wba"][index]
+    R50 = table["R50_w2"][index]
+    INC = table["inc"][index]
     
+    g0 = table['g0'][index]
+    r0 = table['r0'][index]
+    i0 = table['i0'][index]
+    z0 = table['z0'][index]
+    w1 = table['w1'][index]
     
+    logWimx, c21w, mu50, P0 = get_PC(w2, M21, M0, WBA, R50)
+    outDict["logWimx"] = logWimx
+    outDict["mu50"] = mu50
+    outDict["c21w"] = c21w
+
+    g_t  = g0-redCorrect(INC, P0, band1='g', band2='w2')
+    r_t  = r0-redCorrect(INC, P0, band1='r', band2='w2')
+    i_t  = i0-redCorrect(INC, P0, band1='i', band2='w2')
+    z_t  = z0-redCorrect(INC, P0, band1='z', band2='w2')
+    w1_t = w1-redCorrect(INC, P0, band1='w1', band2='w2')
     
+    # Colors
+    outDict["g_r"] = g_t-r_t
+    outDict["r_i"] = r_t-i_t
+    outDict["i_z"] = i_t-z_t
+    outDict["g_z"] = g_t-z_t
+    outDict["g_i"] = g_t-i_t
+    outDict["r_z"] = r_t-z_t
     
+    # Mags
+    outDict["g_w2"] = g_t-w2
+    outDict["r_w2"] = r_t-w2
+    outDict["i_w2"] = i_t-w2
+    outDict["z_w2"] = z_t-w2
+    outDict["w1_w2"]= w1_t-w2
     
+    inList=[]
+    for f in features: inList.append(outDict[f])
+        
     
+    x_t = np.asarray([inList])
+    y_t = regr.predict(x_t) 
     
+    # guess - prediction
+    delta = outDict[output]-y_t
     
+    return delta
+#################################################################   
+def sign(x):
+    if x<0: return -1.
+    elif x>0: return 1.
+    else: return 0.
+
     
+def solver(f, x1, x2, threshold=0.01, N_iter=0):
     
-    
-    
+    n = N_iter
+    y1 = f(x1)
+    y2 = f(x2)
+    if sign(y1)*sign(y2)==1: return None
+    elif np.abs(x2-x1)<threshold: 
+        m = (y2-y1)/(x2-x1)
+        b = y1-m*x1
+        return -b/m,n+2
+
+    d = (x2-x1)/5.
+    x0 = x1
+    n+=2
+    while x0<x2:
+        if sign(f(x0))*sign(f(x0+d))==-1: 
+            return solver(f, x0, x0+d, threshold=threshold,N_iter=n+2)
+        x0+=d
+        n+=2    
 #################################################################   
 
