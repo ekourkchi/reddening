@@ -732,6 +732,7 @@ def predictor(w2, table, regr, features, output, index=0):
     outDict["r_w2"] = r_t-w2
     outDict["i_w2"] = i_t-w2
     outDict["z_w2"] = z_t-w2
+    
     outDict["w1_w2"]= w1_t-w2
     
     inList=[]
@@ -745,19 +746,13 @@ def predictor(w2, table, regr, features, output, index=0):
     delta = outDict[output]-y_t
     
     return delta
-#################################################################   
-def sign(x):
-    if x<0: return -1.
-    elif x>0: return 1.
-    else: return 0.
-
-    
+#################################################################      
 def solver(f, x1, x2, threshold=0.01, N_iter=0):
     
     n = N_iter
     y1 = f(x1)
     y2 = f(x2)
-    if sign(y1)*sign(y2)==1: return None
+    if np.sign(y1)*np.sign(y2)==1: return None
     elif np.abs(x2-x1)<threshold: 
         m = (y2-y1)/(x2-x1)
         b = y1-m*x1
@@ -767,7 +762,7 @@ def solver(f, x1, x2, threshold=0.01, N_iter=0):
     x0 = x1
     n+=2
     while x0<x2:
-        if sign(f(x0))*sign(f(x0+d))==-1: 
+        if np.sign(f(x0))*np.sign(f(x0+d))==-1: 
             return solver(f, x0, x0+d, threshold=threshold,N_iter=n+2)
         x0+=d
         n+=2    
