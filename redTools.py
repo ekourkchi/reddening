@@ -633,6 +633,7 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['i_w2']  = i-w2
     table['z_w2']  = z-w2
     table['w1_w2'] = w1-w2
+    table['u_g']   = u-g
     table['g_r']   = g-r
     table['r_i']   = r-i
     table['g_i']   = g-i
@@ -640,6 +641,20 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['r_z']   = r-z
     table['g_z']   = g-z
 
+
+    data = {'$g-r$':g-r, '$r-i$':r-i, '$i-z$':i-z}
+    order_of_keys = ['$g-r$', '$r-i$', '$i-z$']
+    list_of_tuples = [(key, data[key]) for key in order_of_keys]
+    data = OrderedDict(list_of_tuples)
+    d = pd.DataFrame.from_dict(data)
+    z_scaler = StandardScaler()
+    z_data = z_scaler.fit_transform(d)
+    pca = PCA().fit(z_data)
+    pca_data = pca.transform(z_data)
+
+    table["Cpc1"] = pca_data[:,0]
+    table["Cpc2"] = pca_data[:,1]
+    table["Cpc3"] = pca_data[:,2]   
     
     n = len(table['pgc'])
     indices = np.arange(n)
@@ -660,6 +675,13 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     indices = np.arange(N_cross, n)
     table_trn = trim(table_tmp, indices)
     
+    table_tst["scaler"] = z_scaler
+    table_cvl["scaler"] = z_scaler
+    table_trn["scaler"] = z_scaler
+    table_tst["Cpca"] = pca
+    table_cvl["Cpca"] = pca
+    table_trn["Cpca"] = pca
+   
     return table_tst, table_cvl, table_trn
 #################################################################   
 def ML_data(table, features, output):
@@ -702,6 +724,7 @@ def predictor(w2, table, regr, features, output, index=0):
     R50 = table["R50_w2"][index]
     INC = table["inc"][index]
     
+    u0 = table['u0'][index]
     g0 = table['g0'][index]
     r0 = table['r0'][index]
     i0 = table['i0'][index]
@@ -712,7 +735,10 @@ def predictor(w2, table, regr, features, output, index=0):
     outDict["logWimx"] = logWimx
     outDict["mu50"] = mu50
     outDict["c21w"] = c21w
-
+    
+    outDict["pc0"] = P0
+    
+    u_t  = u0-redCorrect(INC, P0, band1='u', band2='w2')
     g_t  = g0-redCorrect(INC, P0, band1='g', band2='w2')
     r_t  = r0-redCorrect(INC, P0, band1='r', band2='w2')
     i_t  = i0-redCorrect(INC, P0, band1='i', band2='w2')
@@ -720,12 +746,31 @@ def predictor(w2, table, regr, features, output, index=0):
     w1_t = w1-redCorrect(INC, P0, band1='w1', band2='w2')
     
     # Colors
+    outDict["u_g"] = u_t-g_t
     outDict["g_r"] = g_t-r_t
     outDict["r_i"] = r_t-i_t
     outDict["i_z"] = i_t-z_t
     outDict["g_z"] = g_t-z_t
     outDict["g_i"] = g_t-i_t
     outDict["r_z"] = r_t-z_t
+    
+    gr = np.asarray([g_t])-np.asarray([r_t])
+    ri = np.asarray([r_t])-np.asarray([i_t])
+    iz = np.asarray([i_t])-np.asarray([z_t])
+    data = {'$g-r$':gr, '$r-i$':ri, '$i-z$':iz}
+    order_of_keys = ['$g-r$', '$r-i$', '$i-z$']
+    list_of_tuples = [(key, data[key]) for key in order_of_keys]
+    
+    data = OrderedDict(list_of_tuples)
+    d = pd.DataFrame.from_dict(data)
+    z_scaler = table["scaler"]
+    pca = table["Cpca"]
+    z_data = z_scaler.fit_transform(d)
+    pca_data = pca.transform(z_data)
+    outDict["Cpc1"] = pca_data[0][0]
+    outDict["Cpc2"] = pca_data[0][1]
+    outDict["Cpc3"] = pca_data[0][2] 
+    
     
     # Mags
     outDict["g_w2"] = g_t-w2

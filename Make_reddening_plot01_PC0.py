@@ -63,8 +63,8 @@ def plot_Band(ax, band1='r', band2='w1'):
     scaler, pca, AB, cov, rms = faceON_pca(inFile, band1=band1, band2=band2)
     
     inc_lim = [50,60]
-    #table = getTable(inFile, band1=band1, band2=band2, faceOn=False, inc_lim=inc_lim)
-    table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
+    table = getTable(inFile, band1=band1, band2=band2, faceOn=False, inc_lim=inc_lim)
+    #table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
                      
     text1 = '\overline{'+band1+'}-\overline{W}1'            # example: cr-W1
        
@@ -126,20 +126,20 @@ def plot_Band(ax, band1='r', band2='w1'):
 
     for i in range(len(pgc)):
         if c21w[i]>=1 and c21w[i]< 3:
-            p2, = ax.plot(r_w1[i], pc0[i], 'g.', markersize=7, alpha=0.4, label=r"$1 < "+text2+" < 3$")  
+            p2, = ax.plot(r_w1[i], pc0[i], 'g.', markersize=3, alpha=0.4, label=r"$1 < "+text2+" < 3$")   # markersize=7
         if c21w[i]<1  :
-            p1, = ax.plot(r_w1[i], pc0[i], 'b.', markersize=7, alpha=0.4, label=r"$"+text2+" < 1$")
+            p1, = ax.plot(r_w1[i], pc0[i], 'b.', markersize=3, alpha=0.4, label=r"$"+text2+" < 1$")
         if c21w[i]>=3:
-            p3, = ax.plot(r_w1[i], pc0[i], 'r.', markersize=7, alpha=0.4, label=r"$3 < "+text2+"$")   
+            p3, = ax.plot(r_w1[i], pc0[i], 'r.', markersize=3, alpha=0.4, label=r"$3 < "+text2+"$")   
 
     y = np.linspace(-5,5,50)
     x = a0*y+b0
     ax.plot(x,y, 'k--')
     
-    ax.set_xlabel('$\gamma_{'+band1+','+band2+'}^{(o)}\/\/ [mag]$', fontsize=16, labelpad=7)
+    ax.set_xlabel('$\Delta m_{'+band1+','+band2+'}^{(o)}\/\/ [mag]$', fontsize=16, labelpad=7)
     
     if band1 in ['u','i']:
-       ax.set_ylabel('$P_{0,'+band2+'}$', fontsize=16, labelpad=7)
+       ax.set_ylabel('$P_{1,'+band2+'}$', fontsize=16, labelpad=7)
     
     
     rw_lim = [-2.2,1.8]
@@ -177,8 +177,8 @@ def plot_Band(ax, band1='r', band2='w1'):
     ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=14, color='k')    
         
     y0 = 0.6*Ylm[0]+0.40*Ylm[1]
-    #ax.text(x0,y0, r''+"%.0f" % (inc_lim[0])+'$^o$'+'$< inc. <$'+"%.0f" % (inc_lim[1])+'$^o$', fontsize=14, color='k')    
-    ax.text(x0,y0, r'$ inc. < 45^o$', fontsize=14, color='k')  
+    ax.text(x0,y0, r''+"%.0f" % (inc_lim[0])+'$^o$'+'$< inc. <$'+"%.0f" % (inc_lim[1])+'$^o$', fontsize=14, color='k')    
+    #ax.text(x0,y0, r'$ inc. < 45^o$', fontsize=14, color='k')  
 
     Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
     x0 = 0.9*Xlm[0]+0.1*Xlm[1]
@@ -229,4 +229,5 @@ plot_Band(ax, band1='w1', band2='w2')
 plt.setp(ax.get_yticklabels(), visible=False)
 
 #plt.show()
-plt.savefig('color_pc0_w2.eps', dpi=600)
+#plt.savefig('color_pc0_w2.eps', dpi=600)
+plt.savefig('color_pc0_w2_50-60.eps', dpi=600)

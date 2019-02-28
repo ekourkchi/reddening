@@ -127,7 +127,7 @@ if band1!='w1':
 else: 
     ndim, nwalkers = 5, 200
 
-if True:    ## MCMC part
+if False:    ## MCMC part
 
 
         p0 = [np.random.randn(ndim) for i in range(nwalkers)]
@@ -176,19 +176,19 @@ if True:    ## Ploting part
 
         if band1!='w1': 
             truths=[a[0],b[0],c[0],d[0],alpha[0],beta[0],gamma[0]]
-            fig = corner.corner(samples, labels=["$C_{3,"+band1+"}$","$C_{2,"+band1+"}$", "$C_{1,"+band1+"}$", "$C_{0,"+band1+"}$",r"$\alpha_"+band1+"$", r"$\beta_"+band1+"$", r"$\theta_"+band1+"$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+            fig = corner.corner(samples, labels=["$C^{(3)}_{"+band1+"}$", "$C^{(2)}_{"+band1+"}$", "$C^{(1)}_{"+band1+"}$", "$C^{(0)}_{"+band1+"}$",r"$\alpha_"+band1+"$", r"$\beta_"+band1+"$", r"$\theta_"+band1+"$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 
-                    title_kwargs={"fontsize":18}, title_fmt=".3f") 
+                    title_kwargs={"fontsize":18}, title_fmt=".3f", bins=25) 
         
         else:
             truths=[c[0],d[0],alpha[0],beta[0],gamma[0]]
-            fig = corner.corner(samples, labels=["$C_{1,"+band1+"}$", "$C_{0,"+band1+"}$",r"$\alpha_{"+band1+"}$", r"$\beta_{"+band1+"}$", r"$\theta_{"+band1+"}$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+            fig = corner.corner(samples, labels=["$C^{(1)}_{"+band1+"}$", "$C^{(0)}_{"+band1+"}$",r"$\alpha)_{"+band1+"}$", r"$\beta)_{"+band1+"}$", r"$\theta)_{"+band1+"}$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 
-                    title_kwargs={"fontsize":18}, title_fmt=".3f")        
+                    title_kwargs={"fontsize":18}, title_fmt=".3f", bins=25)        
         
 
         with open("PC0_mcmc_"+band1+"_"+band2+".txt", 'w') as file:  

@@ -141,7 +141,7 @@ y = np.linspace(-5,5,50)
 x = a0*y+b0
 ax.plot(x,y, 'k--')
 
-ax.set_ylabel('$P_{0,'+band2+'}$', fontsize=15, labelpad=7)
+ax.set_ylabel('$P_{1,'+band2+'}$', fontsize=15, labelpad=7)
 add_axis(ax,[-2,2],[-4.2,4.2])
 plt.setp(ax.get_xticklabels(), visible=False)
 lns = [p1, p2, p3]

@@ -19,7 +19,7 @@ from matplotlib import gridspec
 import sklearn.datasets as ds
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-import corner
+#import corner
 import emcee
 import scipy.optimize as op
 from scipy.linalg import cholesky, inv,det
@@ -30,6 +30,7 @@ from george import kernels
 
 from redTools import *
 from Kcorrect import *
+import esn_corner as corner
 
 from matplotlib import rcParams
 rcParams["font.size"] = 14
@@ -99,9 +100,9 @@ if True:    ## MCMC part
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 
-                    title_kwargs={"fontsize":15}, title_fmt=".3f")        
+                    title_kwargs={"fontsize":15}, title_fmt=".3f", bins=25)        
         
         
-        #fig.savefig("PC0_mcmc_"+band1+"_"+band2+".George3.png")
+        #fig.savefig("PC0_mcmc_"+band1+"_"+band2+"_George3.png")
         plt.show()
 
