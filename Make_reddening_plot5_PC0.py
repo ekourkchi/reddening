@@ -258,8 +258,8 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
     ax.set_ylim([-3.6,3.6])     
     ax.set_xlim([-3.6,3.6])    
     
-    if xlabel: ax.set_xlabel(r'$P_{0,w1}$', fontsize=16)
-    if ylabel: ax.set_ylabel(r'$P_{0,w2}$', fontsize=16) 
+    if xlabel: ax.set_xlabel(r'$P_{1,w1}$', fontsize=16)
+    if ylabel: ax.set_ylabel(r'$P_{1,w2}$', fontsize=16) 
     
     if Y_twin:
         y_ax = ax.twinx()

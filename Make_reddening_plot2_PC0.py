@@ -243,7 +243,7 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     ax.minorticks_on()
     
     #ax.text(45,0.8, r''+"%.0f" % (c21w_[0])+'$< c21W_1 <'+"%.0f" % (c21w_[1])+'$', color=color, fontsize=11)
-    ax.text(52,-0.7, r''+"%.1f" % (pc0_lim[0])+'$< P_{0,'+band2+'} <$'+"%.1f" % (pc0_lim[1]), fontsize=14)
+    ax.text(52,-0.7, r''+"%.1f" % (pc0_lim[0])+'$< P_{1,'+band2+'} <$'+"%.1f" % (pc0_lim[1]), fontsize=14)
     
     ax.text(47,1.4, band, fontsize=14, color=color)
 

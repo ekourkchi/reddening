@@ -139,7 +139,7 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     ax.yaxis.set_ticks_position('none')    
     ax.annotate(r'$A_{'+band2+'}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
     
-    ax.annotate(r'$P_{0,'+band2+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
+    ax.annotate(r'$P_{1,'+band2+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
     
     fig.savefig("A_"+band2+"_P0.png")
     plt.show()
@@ -263,7 +263,7 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     ax.set_xlim([-3.6,3.6])    
     ax.plot([-4,4], [0,0], 'k:')
     
-    #if xlabel: ax.set_xlabel('$P_0$', fontsize=16)
+    #if xlabel: ax.set_xlabel('$P_1$', fontsize=16)
     #if ylabel: ax.set_ylabel(r'$A_{w2}^{(inc)}$', fontsize=16) 
     
     if Y_twin:

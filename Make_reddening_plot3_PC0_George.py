@@ -141,7 +141,7 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     ax.yaxis.set_ticks_position('none')    
     ax.annotate(r'$A_{'+band2+'}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
     
-    ax.annotate(r'$P_{0,'+band2+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
+    ax.annotate(r'$P_{1,'+band2+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
     
     fig.savefig("A_"+band2+"_P0_GPgrg.png")
     plt.show()
@@ -175,12 +175,7 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     X[1] = inc
     X = X.T
     
-    if band1=='u': theta = [3.668874  , 6.50517701, 0.59288974, 0.16381692]
-    if band1=='g': theta = [ 3.15024649,  5.59633583, -0.54934107,  0.10942759]
-    if band1=='r': theta = [3.00712491,  5.28702113, -1.04442791, 0.09683042]
-    if band1=='i': theta = [ 2.80674111,  4.97871648, -1.58905037,  0.09901532]
-    if band1=='z': theta = [ 2.7634206 ,  4.64052849, -2.06768134,  0.09825892]
-    if band1=='w1': theta = [ 2.68218476e+00,  1.02518650e+01, -4.78962522e+00,  1.00000000e-02]
+    theta = george_params(band1=band1)
     
     l1 = np.exp(theta[0])
     l2 = np.exp(theta[1])
@@ -293,7 +288,7 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     ax.set_xlim([-3.6,3.6])    
     ax.plot([-4,4], [0,0], 'k:')
     
-    #if xlabel: ax.set_xlabel('$P_0$', fontsize=16)
+    #if xlabel: ax.set_xlabel('$P_1$', fontsize=16)
     #if ylabel: ax.set_ylabel(r'$A_{w2}^{(inc)}$', fontsize=16) 
     
     if Y_twin:

@@ -145,7 +145,7 @@ def plotRMS(ax, inFile, pc0_lim=[0,2]):
 
 
     ax.plot([1.7,1.7],[0,1],'k:')
-    ax.plot([3.2,3.2],[0,1],'k:')
+    ax.plot([3.2,3.2],[0,0.39],'k:')
     ax.plot([4.7,4.7],[0,1],'k:')
 
     ax.set_xlim(0.3,6.2)
@@ -155,7 +155,7 @@ def plotRMS(ax, inFile, pc0_lim=[0,2]):
     ax.tick_params(which='major', length=7, width=1.5)
     ax.tick_params(which='minor', length=4, color='#000033', width=1.0)    
 
-    # additional Y-axis (on the right)
+    ## additional Y-axis (on the right)
     y_ax = ax.twinx()
     y_ax.set_ylim(0.03,0.49)
     y_ax.set_yticklabels([])
@@ -163,18 +163,18 @@ def plotRMS(ax, inFile, pc0_lim=[0,2]):
     y_ax.tick_params(which='major', length=7, width=1.5, direction='in')
     y_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
     
-    # additional X-axis (on the top)
-    #x_ax = ax.twiny()
-    #x_ax.set_xlim(0.3,6.2)
-    #x_ax.set_xticklabels([])
-    #x_ax.tick_params(which='major', length=7, width=1.5, direction='in')
-    #x_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
+    ## additional X-axis (on the top)
+    ##x_ax = ax.twiny()
+    ##x_ax.set_xlim(0.3,6.2)
+    ##x_ax.set_xticklabels([])
+    ##x_ax.tick_params(which='major', length=7, width=1.5, direction='in')
+    ##x_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
     
     
-    #plt.xticks([1,2.5,4,5.5])
-    #plt.setp(ax.get_xticklabels(), visible=False)
+    ##plt.xticks([1,2.5,4,5.5])
+    ##plt.setp(ax.get_xticklabels(), visible=False)
     
-    ax.text(2.6,0.4, r''+"%.0f" % (pc0_lim[0])+'$\/ \leq P_0 < \/$'+"%.0f" % (pc0_lim[1]), fontsize=14, color='black', weight='bold')
+    ax.text(2.2,0.4, r''+"%.0f" % (pc0_lim[0])+'$~ \leq P_0 < ~$'+"%.0f" % (pc0_lim[1]), fontsize=14, color='black', weight='bold')
     
     ax.set_ylabel('RMS [mag]', fontsize=14, labelpad=10)
     
