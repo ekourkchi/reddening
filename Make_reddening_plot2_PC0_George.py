@@ -189,7 +189,8 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
     l2 = np.exp(theta[1])
     sigma = np.exp(theta[2])
     yerr = np.diagonal(np.sqrt(noise2))+theta[3]
-    kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    ##kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
 
     gp = george.GP(kernel)
     gp.compute(X, yerr)
@@ -236,10 +237,18 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
             r_max[ii] = np.max(_A[indx])
             r_med[ii] = np.median(_A[indx])
         #if band1!='w1': 
-        ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
+        #ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
         
     if scatter:
         ax.plot(inc, R, 'o', color='black', markersize=1, alpha=0.4)
+
+
+    pc0_med = inc__*0+np.median(pc0)
+    X_ = np.c_[pc0_med.ravel(), inc__.ravel()]
+    _A, var_A = gp.predict(A, X_, return_var=True)     
+    r_med = _A.reshape(pc0_med.shape)
+    ax.plot(inc__, r_med, 'k--') 
+
         
     if binned:
         xl = []

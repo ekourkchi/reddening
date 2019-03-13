@@ -73,7 +73,9 @@ def getRMS(inFile, pc0_lim=[0,2], band1 = 'r', band2 = 'w2'):
     l2 = np.exp(theta[1])
     sigma = np.exp(theta[2])
     yerr = np.diagonal(np.sqrt(noise2))+theta[3]
-    kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    ####kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
+    
     gp = george.GP(kernel)
     gp.compute(X, yerr)
     A_grg, var_A_grg = gp.predict(R, X, return_var=True)
@@ -174,7 +176,7 @@ def plotRMS(ax, inFile, pc0_lim=[0,2]):
     ##plt.xticks([1,2.5,4,5.5])
     ##plt.setp(ax.get_xticklabels(), visible=False)
     
-    ax.text(2.2,0.4, r''+"%.0f" % (pc0_lim[0])+'$~ \leq P_0 < ~$'+"%.0f" % (pc0_lim[1]), fontsize=14, color='black', weight='bold')
+    ax.text(2.2,0.4, r''+"%.0f" % (pc0_lim[0])+'$~ \leq P_1 < ~$'+"%.0f" % (pc0_lim[1]), fontsize=14, color='black', weight='bold')
     
     ax.set_ylabel('RMS [mag]', fontsize=14, labelpad=10)
     

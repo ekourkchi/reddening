@@ -181,7 +181,8 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     l2 = np.exp(theta[1])
     sigma = np.exp(theta[2])
     yerr = np.diagonal(np.sqrt(noise2))+theta[3]
-    kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    ##kernel = sigma * kernels.Matern52Kernel([l1,l2], ndim=2, axes=[0, 1])
+    kernel = sigma * kernels.ExpSquaredKernel([l1,l2], ndim=2, axes=[0, 1])
 
 
     gp = george.GP(kernel)
@@ -229,7 +230,7 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
             r_max[ii] = np.max(_A[indx])
             r_med[ii] = np.median(_A[indx])
         #if band1!='w1': 
-        ax.fill_between(pc0__, r_min, r_max, alpha=0.30, facecolor=color)
+        #ax.fill_between(pc0__, r_min, r_max, alpha=0.30, facecolor=color)
 
 
     if scatter:
@@ -273,7 +274,12 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
                 yel.append(np.std(y))
             
     ### Fitting a curve
-    ax.plot(pc0__, r_med, 'k--')
+    pc0_med = np.linspace(-4,4,50)
+    inc__ = pc0_med*0+np.median(inc)
+    X_ = np.c_[pc0_med.ravel(), inc__.ravel()]
+    _A, var_A = gp.predict(A, X_, return_var=True)     
+    r_med = _A.reshape(pc0_med.shape)
+    ax.plot(pc0_med, r_med, 'k--') 
     
     ax.tick_params(which='major', length=6, width=1.5, direction='in')
     ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')

@@ -194,11 +194,17 @@ def plot_Rinc(ax, T, Input, pc0_lim=[-1,1], color='red', scatter=False, binned=F
                     r_lst.append(r)
             r_min[ii] = np.min(r_lst)
             r_max[ii] = np.max(r_lst)
-        if band!='w1': 
-            ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
+        #if band!='w1' and pc0_lim[1]!=4: 
+            #ax.fill_between(inc__, r_min, r_max, alpha=0.35, facecolor=color)        
         
     if scatter:
         ax.plot(inc, R, 'o', color='black', markersize=1, alpha=0.4)
+
+    pc0_med = inc__*0+np.median(pc0)
+    q2 = 10**(-1.*gamma)
+    r_med = log_a_b(inc__, q2)*(a*pc0_med**3+b*pc0_med**2+c*pc0_med+d)
+    ax.plot(inc__, r_med, 'k--') 
+
   
     if binned:
         xl = []

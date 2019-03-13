@@ -196,8 +196,8 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
                     r_lst.append(r)
             r_min[ii] = np.min(r_lst)
             r_max[ii] = np.max(r_lst)
-        if band!='w1': 
-            ax.fill_between(pc0__, r_min, r_max, alpha=0.30, facecolor=color)
+        #if band!='w1': 
+            #ax.fill_between(pc0__, r_min, r_max, alpha=0.30, facecolor=color)
 
 
     if scatter:

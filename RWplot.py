@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import math
 import matplotlib.pyplot as plt
@@ -85,6 +86,7 @@ mu50 = table['mu50']
 Emu50 = table['Emu50']
 
 print len(logWimx)
+
 data = {'$Log( W_{mx}^i)$':logWimx, '$c21W2$':c21w, '$\mu 50$':mu50}
 order_of_keys = ['$Log( W_{mx}^i)$', '$c21W2$', '$\mu 50$']
 list_of_tuples = [(key, data[key]) for key in order_of_keys]
@@ -157,6 +159,9 @@ ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['pc0'], fontsize=12, color='k')
+x0 = 0.15*Xlm[0]+0.85*Xlm[1]
+y0 = 0.50*Ylm[0]+0.50*Ylm[1]
+ax.text(x0,y0, r'$(a)$', fontsize=12, color='k')
 
 Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.9*Xlm[0]+0.1*Xlm[1]
@@ -196,6 +201,9 @@ ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$\mu 50$'], fontsize=12, color='k')
+x0 = 0.15*Xlm[0]+0.85*Xlm[1]
+y0 = 0.2*Ylm[0]+0.80*Ylm[1]
+ax.text(x0,y0, r'$(b)$', fontsize=12, color='k')
 
 Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.9*Xlm[0]+0.1*Xlm[1]
@@ -237,6 +245,9 @@ ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$c21W2$'], fontsize=12, color='k')
+x0 = 0.15*Xlm[0]+0.85*Xlm[1]
+y0 = 0.2*Ylm[0]+0.80*Ylm[1]
+ax.text(x0,y0, r'$(c)$', fontsize=12, color='k')
 
 Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.9*Xlm[0]+0.1*Xlm[1]
@@ -278,6 +289,9 @@ ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1'][u'$Log( W_{mx}^i)$'], fontsize=12, color='k')
+x0 = 0.15*Xlm[0]+0.85*Xlm[1]
+y0 = 0.2*Ylm[0]+0.80*Ylm[1]
+ax.text(x0,y0, r'$(d)$', fontsize=12, color='k')
 
 Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.9*Xlm[0]+0.1*Xlm[1]
@@ -300,6 +314,9 @@ y0 = 0.80*Ylm[0]+0.20*Ylm[1]
 ax.text(x0,y0, r'$Corr.=$'+'%.2f'%corr['r-w1']['C82'], fontsize=12, color='k')
 ax.set_xlabel('$'+text1+'\/\/ [mag]$', fontsize=16, labelpad=7)
 ax.set_ylabel('$C_{82}$', fontsize=16, labelpad=7)
+x0 = 0.15*Xlm[0]+0.85*Xlm[1]
+y0 = 0.2*Ylm[0]+0.80*Ylm[1]
+ax.text(x0,y0, r'$(e)$', fontsize=12, color='k')
 
 Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.9*Xlm[0]+0.1*Xlm[1]

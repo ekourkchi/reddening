@@ -182,8 +182,15 @@ def plot_Band(ax, band1='r', band2='w1'):
 
     Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
     x0 = 0.9*Xlm[0]+0.1*Xlm[1]
-    y0 = 0.2*Ylm[0]+0.8*Ylm[1]
+    y0 = 0.25*Ylm[0]+0.75*Ylm[1]
     plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(Epc0)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)  
+    
+    x0 = 0.92*Xlm[0]+0.08*Xlm[1]
+    y0 = 0.15*Ylm[0]+0.85*Ylm[1]
+    if band1=='w1':
+        ax.text(x0,y0, 'W1', fontsize=16)
+    else:
+        ax.text(x0,y0, band1, fontsize=16)
     #########################################################################  
 
     #x0 = 0.97*Xlm[0]+0.03*Xlm[1]
@@ -228,6 +235,7 @@ ax = plt.subplot(gs[p]) ; p+=1
 plot_Band(ax, band1='w1', band2='w2')
 plt.setp(ax.get_yticklabels(), visible=False)
 
-#plt.show()
+#
 #plt.savefig('color_pc0_w2.eps', dpi=600)
 plt.savefig('color_pc0_w2_50-60.eps', dpi=600)
+plt.show()
