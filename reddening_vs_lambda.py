@@ -56,56 +56,69 @@ def plotMe(ax, pc0, band2 = 'w2'):
     wavelengths = [lambda_u, lambda_g, lambda_r, lambda_i, lambda_z, lambda_w1]
     
     
-    ####################
-    A_lst = []
-    inc = 45
+    gamma_lst = []
     for band in band1:
         
         a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
-        q2 = 10**(-1.*theta)
-        A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
-        A_lst.append(A_mdl)
-    p1, = ax.plot(wavelengths, A_lst, 'o',  markersize=4, label=r'$i=45^o$')
+        gamma_mdl = (a*pc0**3+b*pc0**2+c*pc0+d)
+        gamma_lst.append(gamma_mdl)
+    
+    p1, = ax.plot(wavelengths[0], gamma_lst[0], 'bo',  markersize=6, label='u')
+    p2, = ax.plot(wavelengths[1], gamma_lst[1], 'gs',  markersize=6, label='g')
+    p3, = ax.plot(wavelengths[2], gamma_lst[2], 'r^',  markersize=6, label='r')
+    p4, = ax.plot(wavelengths[3], gamma_lst[3], 'D',  markersize=6, color='orange', label='i')
+    p5, = ax.plot(wavelengths[4], gamma_lst[4], 'v',  markersize=6, color='maroon', label='z')
+    p6, = ax.plot(wavelengths[5], gamma_lst[5], 'ko',  markersize=6, mfc='none', label='W1')
     ####################
-    ####################
-    A_lst = []
-    inc = 60
-    for band in band1:
+    #A_lst = []
+    #inc = 45
+    #for band in band1:
         
-        a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
-        q2 = 10**(-1.*theta)
-        A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
-        A_lst.append(A_mdl)
-    p2, = ax.plot(wavelengths, A_lst, 'D',  markersize=4, label=r'$i=60^o$')
-    ####################    
+        #a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
+        #q2 = 10**(-1.*theta)
+        #A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
+        #A_lst.append(A_mdl)
+    #p1, = ax.plot(wavelengths, A_lst, 'o',  markersize=4, label=r'$i=45^o$')
     ####################
-    A_lst = []
-    inc = 75
-    for band in band1:
-        
-        a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
-        q2 = 10**(-1.*theta)
-        A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
-        A_lst.append(A_mdl)
-    p3, = ax.plot(wavelengths, A_lst, '^',  markersize=4, label=r'$i=75^o$')
-    ####################      
     ####################
-    A_lst = []
-    inc = 90
-    for band in band1:
+    #A_lst = []
+    #inc = 60
+    #for band in band1:
         
-        a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
-        q2 = 10**(-1.*theta)
-        A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
-        A_lst.append(A_mdl)
-    p4, = ax.plot(wavelengths, A_lst, 's',  markersize=4, label=r'$i=90^o$')
+        #a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
+        #q2 = 10**(-1.*theta)
+        #A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
+        #A_lst.append(A_mdl)
+    #p2, = ax.plot(wavelengths, A_lst, 'D',  markersize=4, label=r'$i=60^o$')
+    #####################    
+    #####################
+    #A_lst = []
+    #inc = 75
+    #for band in band1:
+        
+        #a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
+        #q2 = 10**(-1.*theta)
+        #A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
+        #A_lst.append(A_mdl)
+    #p3, = ax.plot(wavelengths, A_lst, '^',  markersize=4, label=r'$i=75^o$')
+    #####################      
+    #####################
+    #A_lst = []
+    #inc = 90
+    #for band in band1:
+        
+        #a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
+        #q2 = 10**(-1.*theta)
+        #A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
+        #A_lst.append(A_mdl)
+    #p4, = ax.plot(wavelengths, A_lst, 's',  markersize=4, label=r'$i=90^o$')
     ####################    
     
     
     
     ax.set_xlim(0.2,5)
     ax.set_xscale('log')
-    ax.set_ylim(-0.1,1.9)    
+    ax.set_ylim(-0.1,1.4)    
     
     if pc0==-2:
         plt.xticks([0.5,1,2,3,4], ('0.5','1','2','3','4'))
@@ -120,7 +133,7 @@ def plotMe(ax, pc0, band2 = 'w2'):
 
     ## additional Y-axis (on the right)
     y_ax = ax.twinx()
-    y_ax.set_ylim(-0.1,1.9)
+    y_ax.set_ylim(-0.1,1.4)
     y_ax.set_yticklabels([])
     y_ax.minorticks_on()
     y_ax.tick_params(which='major', length=7, width=1.5, direction='in')
@@ -138,14 +151,15 @@ def plotMe(ax, pc0, band2 = 'w2'):
     ##plt.xticks([1,2.5,4,5.5])
     ##plt.setp(ax.get_xticklabels(), visible=False)
     
-    ax.text(0.9,1.5, r"$P_1 =$"+"%.0f" % (pc0), fontsize=13, color='black', weight='bold')
+    ax.text(0.9,1.05, r"$P_1 =$"+"%.0f" % (pc0), fontsize=13, color='black', weight='bold')
     
     if pc0==0:
-        ax.set_ylabel(r'$A^{(i)}_{W2}$'+' [mag]', fontsize=14, labelpad=10)
+        ax.set_ylabel(r'$\gamma^{(i)}_{W2}$', fontsize=14, labelpad=20, rotation=0)
     
     if pc0==2:
-        lns = [p1, p2, p3, p4]
-        ax.legend(handles=lns, fontsize=12, loc=0)
+        lns = [p1, p2, p3, p4, p5, p6]
+        ### bbox_to_anchor=(x,y,width,height)
+        ax.legend(handles=lns, fontsize=12, bbox_to_anchor=(0., 1.30, 1., .102), loc=3, ncol=3, mode="expand", borderaxespad=0.)
         
     if pc0==2:
         # Set scond x-axis
@@ -166,15 +180,15 @@ def plotMe(ax, pc0, band2 = 'w2'):
         
         ax2.xaxis.set_ticks_position('top') # set the position of the second x-axis to top
         ax2.xaxis.set_label_position('top') 
-        ax2.spines['top'].set_position(('outward', 10))
-        ax2.set_xlabel('Band')
+        ax2.spines['top'].set_position(('outward', 8))
+        #ax2.set_xlabel('Band')
         ax2.set_xlim(ax.get_xlim())
     
 
 ################################################################# 
 
 fig = py.figure(figsize=(4.5, 12), dpi=100)   
-fig.subplots_adjust(hspace=0, top=0.92, bottom=0.08, left=0.20, right=0.95)
+fig.subplots_adjust(hspace=0, top=0.89, bottom=0.08, left=0.20, right=0.95)
 gs = gridspec.GridSpec(5,1) 
 p = 0
 
