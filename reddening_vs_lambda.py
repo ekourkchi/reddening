@@ -57,11 +57,14 @@ def plotMe(ax, pc0, band2 = 'w2'):
     
     
     gamma_lst = []
-    for band in band1:
+    for i in range(len(band1)):
+        
+        band = band1[i]
         
         a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band, band2=band2)
         gamma_mdl = (a*pc0**3+b*pc0**2+c*pc0+d)
         gamma_lst.append(gamma_mdl)
+        print '%d'%pc0+'  '+'%.4f'%wavelengths[i]+'  '+'%.3f'%gamma_mdl
     
     p1, = ax.plot(wavelengths[0], gamma_lst[0], 'bo',  markersize=6, label='u')
     p2, = ax.plot(wavelengths[1], gamma_lst[1], 'gs',  markersize=6, label='g')
