@@ -473,16 +473,18 @@ def getReddening_params(band1='r', band2='w2'):
             Ealpha = 0.004
             Ebeta = 0.005             
         if band1=='w1':
-            a= 0.
-            b= 0.
+                  
+            a= -0.002
+            b= -0.007      
             c= 0.015
-            d= 0.039
+            d= 0.062
             alpha = 0.008
-            beta = -0.571
-            gamma = 1.805
+            beta = -0.578
+            gamma = 1.789
             Ealpha = 0.005
-            Ebeta = 0.006 
-    
+            Ebeta = 0.006                      
+            
+        
     elif band2=='w1':
         if band1=='u':
             a= -0.015

@@ -106,9 +106,11 @@ def lnprior(theta):
         a,b,c,d,alpha,beta,gamma = theta
     else: 
         c,d,alpha,beta,gamma = theta
-        a=0 ; b=0
+        a=-0.002 ; b=-0.007
 
     if gamma>10. or gamma<1: return -np.inf 
+    #if a>0.01 or b>0.01: return -np.inf 
+
 
     return 0.0
 
@@ -120,14 +122,14 @@ def lnprob(theta, inc, R, pc0):
         return -np.inf    
     return lp + lnlike(theta, inc, R, pc0)
 
-npz_file = "PC0_mcmc_"+band1+"_"+band2+".npz"
+npz_file = "PC0_mcmc_tst_"+band1+"_"+band2+".npz"
 
 if band1!='w1': 
-    ndim, nwalkers = 7, 200
+    ndim, nwalkers = 7, 20
 else: 
-    ndim, nwalkers = 5, 200
+    ndim, nwalkers = 5, 20
 
-if False:    ## MCMC part
+if True:    ## MCMC part
 
 
         p0 = [np.random.randn(ndim) for i in range(nwalkers)]
@@ -137,11 +139,11 @@ if False:    ## MCMC part
 
         #pos, prob, state = sampler.run_mcmc(p0, 50)
         #sampler.reset()
-        sampler.run_mcmc(p0, 20000)
+        sampler.run_mcmc(p0, 5000)
 
 
         ## removing the first 1000 samples
-        samples = sampler.chain[:, 2000:, :].reshape((-1, ndim))
+        samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
         
         np.savez_compressed(npz_file, array=samples)
 
@@ -191,7 +193,7 @@ if True:    ## Ploting part
                     title_kwargs={"fontsize":18}, title_fmt=".3f", bins=25)        
         
 
-        with open("PC0_mcmc_"+band1+"_"+band2+".txt", 'w') as file:  
+        with open("PC0_mcmc_tst_"+band1+"_"+band2+".txt", 'w') as file:  
 
              if band1!='w1':
                  file.write("a: "+str(a)+"\n")
@@ -203,6 +205,6 @@ if True:    ## Ploting part
              file.write("gamma: "+str(gamma)+"\n")
              
         
-        fig.savefig("PC0_mcmc_"+band1+"_"+band2+".png")
+        fig.savefig("PC0_mcmc_tst_"+band1+"_"+band2+".png")
         #plt.show()
 

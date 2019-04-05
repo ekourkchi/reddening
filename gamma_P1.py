@@ -80,7 +80,7 @@ def plot_array(inFile, scatter=False, binned=True):
     dye = {"u":"blue","g":"green","r":"red","i":"orange","z":"maroon","w1":"purple" }
     
     fig = py.figure(figsize=(16, 3.5), dpi=100)    
-    fig.subplots_adjust(wspace=0, top=0.95, bottom=0.12, left=0.05, right=0.98)
+    fig.subplots_adjust(wspace=0, top=0.95, bottom=0.15, left=0.05, right=0.98)
     
     gs = gridspec.GridSpec(1, 6) 
 
@@ -111,7 +111,7 @@ def plot_array(inFile, scatter=False, binned=True):
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')    
 
-    ax.annotate('$P_{1,W2}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
+    ax.annotate('$P_{1,W2}$', (0.50,0.02), xycoords='figure fraction', size=18, color='black')
     
     fig.savefig("gamma_P1_lambda.eps")
     fig.savefig("gamma_P1_lambda.png")
@@ -137,17 +137,32 @@ def plot_Rinc(ax, T2, Input2, color='red', scatter=False, binned=False, xlabel=T
     R = r_w1 - (alpha*pc0+beta)
     #dA2 = np.sqrt(dF2*(a*pc0**3+b*pc0**2+c*pc0+d)**2+(F*(3*a*pc0**2+2*b*pc0+c)*Epc0)**2)
     
-    R[np.where(R<0)]=0
-    gama_lambda = R/F
 
-    x_ = np.linspace(-4,4,50)
+    gama_lambda = R/F
+    if scatter:
+        ax.plot(pc0, gama_lambda, 'o', color='black', markersize=1, alpha=0.15)
+
+    
+    if band!='w1':
+        R[np.where(R<0)]=0
+        gama_lambda = R/F
+    
+    
+    if band!='w1':
+        indx, = np.where(gama_lambda>0)
+        gama_lambda = gama_lambda[indx]
+        pc0 = pc0[indx]
+
+    x_ = np.linspace(-4,4,500)
     q2 = 10**(-1.*gamma)
     y_ = (a*x_**3+b*x_**2+c*x_+d)
+    
+    indx, = np.where(y_>0)
+    x_ = x_[indx]
+    y_ = y_[indx]
     ax.plot(x_, y_, 'k--')    
  
     
-    if scatter:
-        ax.plot(pc0, gama_lambda, 'o', color='black', markersize=1, alpha=0.15)
 
 
     if binned:
@@ -172,11 +187,11 @@ def plot_Rinc(ax, T2, Input2, color='red', scatter=False, binned=False, xlabel=T
                 average   = np.median(y)
                 stdev = np.std(y)
                 
-                index = np.where(y<average+2.*stdev)
+                index = np.where(y<average+3.*stdev)
                 x = x[index]
                 y = y[index]
                 
-                index = np.where(y>average-2.*stdev)
+                index = np.where(y>average-3.*stdev)
                 x = x[index]
                 y = y[index]        
 
@@ -192,13 +207,13 @@ def plot_Rinc(ax, T2, Input2, color='red', scatter=False, binned=False, xlabel=T
     ax.minorticks_on()
 
     ax.plot([40,100], [0,0], 'k:')
-    ax.text(-3,1.5, band, fontsize=14, color=color)
+    ax.text(-3,1.5, band, fontsize=16, color=color)
     ax.set_ylim([-0.1,1.7])     
     ax.set_xlim([-3.6,3.6])    
     ax.plot([-4,4], [0,0], 'k:')    
     
 
-    if ylabel: ax.set_ylabel(r'$\gamma^{(i)}_{W2}$', fontsize=16) 
+    if ylabel: ax.set_ylabel(r'$\gamma_{\lambda}$', fontsize=18) 
     
 
 
@@ -226,9 +241,9 @@ def plot_Rinc(ax, T2, Input2, color='red', scatter=False, binned=False, xlabel=T
         
 
     for tick in ax.xaxis.get_major_ticks():
-                tick.label.set_fontsize(14) 
+                tick.label.set_fontsize(16) 
     for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(14) 
+                tick.label.set_fontsize(16) 
 
 ###########################################################
 plot_array('ESN_HI_catal.csv', scatter=True, binned=True)     

@@ -96,12 +96,11 @@ def plot_array(inFile, scatter=False, binned=True):
     
     dye = {"u":"blue","g":"green","r":"red","i":"orange","z":"maroon","w1":"purple" }
     
-    fig = py.figure(figsize=(5, 4), dpi=100)    
-    fig.subplots_adjust(wspace=0, top=0.95, bottom=0.15, left=0.15, right=0.98)
+    fig = py.figure(figsize=(5,6), dpi=100)    
+    fig.subplots_adjust(wspace=0, top=0.97, bottom=0.10, left=0.2, right=0.98)
     
-    gs = gridspec.GridSpec(1, 1, height_ratios=[1]) 
+    gs = gridspec.GridSpec(2, 1, height_ratios=[0.9,0.5]) 
 
-    p = 0
     ####################################################
     
     band_lst = ['r']
@@ -114,8 +113,10 @@ def plot_array(inFile, scatter=False, binned=True):
             ylabel=True
             xlabel=True
             
+            p=0
             ax = plt.subplot(gs[p]) ; p+=1
-            plot_Rinc(ax, T1[band], Input1[band], T2[band], Input2[band], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band)
+            
+            plot_Rinc(gs, T1[band], Input1[band], T2[band], Input2[band], color=dye[band], scatter=scatter, binned=binned, xlabel=xlabel, ylabel=ylabel, band=band)
             yticks = ax.yaxis.get_major_ticks()
             #if band!='u': yticks[-1].label1.set_visible(False)
             #if band!='u': plt.setp(ax.get_yticklabels(), visible=False)  
@@ -139,7 +140,10 @@ def plot_array(inFile, scatter=False, binned=True):
     plt.show()
     
 ################################################################## 
-def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r'):
+def plot_Rinc(gs, T1, Input1, T2, Input2, color='red', scatter=False, binned=False, xlabel=True, ylabel=True, X_twin=True, Y_twin=True, band='r'):
+    
+    p=0
+    ax = plt.subplot(gs[p]) ; p+=1
     
     myDic = {}
     
@@ -158,7 +162,6 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
     for i in range(len(pgc)):
         myDic[pgc[i]]=[pc0[i],Epc0[i]]
     
-
     pgc     = Input2[0]
     pc0     = Input2[2]
     inc     = Input2[3]
@@ -282,8 +285,45 @@ def plot_Rinc(ax, T1, Input1, T2, Input2, color='red', scatter=False, binned=Fal
     for tick in ax.xaxis.get_major_ticks():
                 tick.label.set_fontsize(14) 
     for tick in ax.yaxis.get_major_ticks():
-                tick.label.set_fontsize(14) 
+                tick.label.set_fontsize(14)
+                
+    
+    ax = plt.subplot(gs[p])
+    ax.plot(PC_w1, PC_w2-PC_w1, 'o', color='black', markersize=2, alpha=0.2)
+    ax.plot(x_, (m*x_+b)-x_, 'r--') 
+    ax.fill_between(x_, (y_+2*yu)-x_, (y_-2*yl)-x_, color='r', alpha=0.5, edgecolor="none")
+    
+    ax.set_xlabel(r'$P_{1,w1}$', fontsize=16)
+    ax.set_ylabel(r'$P_{1,w2}-P_{1,w1}$', fontsize=16)
+    ax.set_xlim([-3.6,3.6])
+    ax.set_ylim([-0.5,0.5])
 
+    ax.tick_params(which='major', length=6, width=1.5, direction='in')
+    ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')
+    ax.minorticks_on() 
+    
+    if Y_twin:
+        y_ax = ax.twinx()
+        y_ax.set_ylim(-0.5,0.5)
+        y_ax.set_yticklabels([])
+        y_ax.minorticks_on()
+        y_ax.tick_params(which='major', length=6, width=1.5, direction='in')
+        y_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')        
+    
+    if X_twin:
+        x_ax = ax.twiny()
+        x_ax.set_xlim(-3.6,3.6)
+        x_ax.set_xticklabels([])
+        x_ax.minorticks_on()
+        x_ax.tick_params(which='major', length=6, width=1.0, direction='in')
+        x_ax.tick_params(which='minor', length=4, color='#000033', width=1.0, direction='in')     
+
+      
+
+    for tick in ax.xaxis.get_major_ticks():
+                tick.label.set_fontsize(14) 
+    for tick in ax.yaxis.get_major_ticks():
+                tick.label.set_fontsize(14)
 ###########################################################
 
 

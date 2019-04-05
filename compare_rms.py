@@ -57,9 +57,7 @@ def getRMS(inFile, pc0_lim=[0,2], band1 = 'r', band2 = 'w2'):
 
     R = r_w1-(alpha*pc0+beta)
 
-
     A_mdl = log_a_b(inc, q2)*(a*pc0**3+b*pc0**2+c*pc0+d)
-
 
     N = len(pc0)
     dR2 = Er_w1**2+(alpha*Epc0)**2+(Ealpha*pc0)**2
@@ -114,6 +112,8 @@ def getRMS(inFile, pc0_lim=[0,2], band1 = 'r', band2 = 'w2'):
         pc0_ = pc0_[indx]
         inc_ = inc_[indx]  
         
+        indx = np.where(A_mdl_<0)
+        A_mdl_[indx]=0
         
         rms_model.append(np.sqrt(np.median((R_-A_mdl_)**2)))
         rms_george.append(np.sqrt(np.median((R_-A_grg_)**2)))

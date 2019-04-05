@@ -206,11 +206,14 @@ def plot_Rinc(ax, T, Input, inc_lim=[85,90], color='red', scatter=False, binned=
     ### Fitting a curve
     #a, b, c, d  = np.polyfit(pc0,R, 3)
     #y_ = a*x_**3+b*x_**2+c*x_+d
-    x_ = np.linspace(-4,4,50)
+    x_ = np.linspace(-4,4,500)
     q2 = 10**(-1.*gamma)
     y_ = log_a_b(np.median(inc), q2)*(a*x_**3+b*x_**2+c*x_+d)
-    ax.plot(x_, y_, 'k--')    
 
+    indx, = np.where(y_>0)
+    x_ = x_[indx]
+    y_ = y_[indx]
+    ax.plot(x_, y_, 'k--')  
         
     if binned:
         xl = []
