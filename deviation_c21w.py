@@ -125,7 +125,7 @@ x = a0*y+b0
 
 delta = r_w1-(a0*logWimx+b0)
 ax.plot(c21w, delta, '.', color='black', markersize=3, alpha=0.5)
-add_axis(ax,[-2,8],[-1.5,1.5])
+add_axis(ax,[-2,6],[-1.5,1.5])
 for i in range(-1,6):
     
     x = []
@@ -142,7 +142,7 @@ ax.set_ylabel(r'$'+'('+text1+')-('+text1+')_{fit}$', fontsize=14)
 ax.set_xlabel(r'$'+text2+'$', fontsize=14) 
 
 
-ax.plot([-2,8], [0,0], 'k:')
+ax.plot([-2,6], [0,0], 'k:')
 
 
 X_err_median = np.median(Ec21w)

@@ -271,6 +271,35 @@ def faceON_pca(inFile, band1 = 'r', band2 = 'w2'):
     
     return scaler, pca, AB, cov, rms
 ################################################################# 
+################################################################# 
+def faceON_surfaceB(inFile, band1 = 'r', band2 = 'w2'):
+    
+    table = getTable(inFile, band1=band1, band2=band2, faceOn=True)
+    
+    index, = np.where(table['Wba']>0.001)
+    table = trim(table, index)
+
+    pgc = table['pgc']
+    r_w1 = table['r_w1']
+    mu50 = table['mu50'] 
+
+    a0, b0  = np.polyfit(mu50, r_w1, 1)
+    delta = np.abs(r_w1-(a0*mu50+b0))
+    indx = np.where(delta<1)
+    r_w1_ = r_w1[indx]
+    mu50_ = mu50[indx]    
+    
+    AB, cov  = np.polyfit(mu50_, r_w1_, 1, cov=True, full = False)
+    a0, b0 = AB[0], AB[1]
+    delta = np.abs(r_w1_-(a0*mu50_+b0))
+    rms = np.sqrt(np.mean(np.square(delta)))
+    
+    table = getTable(inFile, band1=band1, band2=band2, faceOn=False)
+    
+    return AB, cov, rms, table
+    
+################################################################# 
+    
 def faceON(table):
 
     index, = np.where(table['flag']>0)
@@ -416,6 +445,45 @@ def redCorrect(inc, pc0, band1='r', band2='w2'):
     return log_a_b(inc, 10**(-1.*theta))*(a*pc0**3+b*pc0**2+c*pc0+d)
     
 ################################################################# 
+def getReddening_params_surfB(band1='r', band2='w2'):
+    
+    a=0;b=0;c=0;d=0;alpha=0;beta=0;gamma=0
+    Ealpha=0;Ebeta=0 
+    
+    if band2=='w2':
+
+        if band1=='u':
+            d= 1.26
+            alpha = -0.40
+            beta = 9.82
+        if band1=='g':
+            d= 0.9
+            alpha = -0.29
+            beta = 6.24
+            gamma = 2.608
+          
+        if band1=='r':
+            d= 0.689
+            alpha = -0.21
+            beta = 4.03
+            gamma = 2.467
+
+        if band1=='i':
+            d= 0.468
+            alpha = -0.17
+            beta = 2.82
+        if band1=='z':
+            alpha = -0.13
+            beta = 1.97
+            
+        if band1=='w1':
+            alpha = -0.022
+            beta = -0.081
+                                     
+    return a,b,c,d, alpha, beta, gamma, Ealpha, Ebeta   
+
+################################################################# 
+
 def getReddening_params(band1='r', band2='w2'):
     
     a=0;b=0;c=0;d=0;alpha=0;beta=0;gamma=0

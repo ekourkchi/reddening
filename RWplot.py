@@ -189,7 +189,7 @@ ax.plot(x,y, 'k--')
 
 add_axis(ax,[-2,2],[26.8,19.2])
 plt.setp(ax.get_xticklabels(), visible=False)
-ax.set_ylabel(r'$\langle \mu_2 \rangle_e$', fontsize=15, labelpad=7)
+ax.set_ylabel(r'$\langle \mu_2 \rangle^{(i)}_e$', fontsize=15, labelpad=7)
 
 delta = np.abs(r_w1_-(a0*mu50_+b0))
 rms = np.sqrt(np.mean(np.square(delta)))
@@ -197,6 +197,8 @@ Ylm = ax.get_ylim() ; Xlm = ax.get_xlim()
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.65*Ylm[0]+0.35*Ylm[1]
 ax.text(x0,y0, r'$RMS=$'+'%.2f'%rms+' mag', fontsize=12, color='k')
+
+print rms, a0, b0
 
 x0 = 0.45*Xlm[0]+0.55*Xlm[1]
 y0 = 0.80*Ylm[0]+0.20*Ylm[1]
@@ -324,4 +326,4 @@ y0 = 0.2*Ylm[0]+0.8*Ylm[1]
 plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(EC82)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
 
 #plt.show()
-plt.savefig('r_w2_features_Fon.eps', dpi=600)
+plt.savefig('r_w2_features_Fon.eps')
