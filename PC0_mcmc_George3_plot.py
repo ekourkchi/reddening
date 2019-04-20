@@ -96,7 +96,7 @@ if True:    ## MCMC part
         
 
         truths=[l1[0],l2[0],sigma[0], err[0]]
-        fig = corner.corner(samples, labels=["$log(\ell^2_0)$", "$log(\ell^2_1)$", r"$log(\sigma^2_f)$", "Error"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+        fig = corner.corner(samples, labels=["$log(\ell_0)$", "$log(\ell_1)$", r"$log(\sigma^2_f)$", r"$\sigma^2_e$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 

@@ -228,7 +228,7 @@ def esnRand():
 
 npz_file = "PC0_mcmc_"+band1+"_"+band2+".George3.npz"
 
-if True:    ## MCMC part
+if False:    ## MCMC part
 
         ndim, nwalkers = 4, 64
         p0 = [esnRand() for i in range(nwalkers)]
@@ -240,6 +240,13 @@ if True:    ## MCMC part
         
         np.savez_compressed(npz_file, array=samples)
         
+if True:    ## Ploting part
+############################### Cleaning output
+        loaded = np.load(npz_file)
+        samples = loaded['array']
+        ndim, nwalkers = 4, 64
+        
+        
         T = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),zip(*np.percentile(samples, [16, 50, 84], axis=0)))
         
         for i in range(ndim):
@@ -250,7 +257,7 @@ if True:    ## MCMC part
         
 
         truths=[l1[0],l2[0],sigma[0], err[0]]
-        fig = corner.corner(samples, labels=["$log(\ell^2_0)$", "$log(\ell^2_1)$", r"$log(\sigma^2_f)$", "Error"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
+        fig = corner.corner(samples, labels=["$log \/ \ell_0$", "$log \/ \ell_1$", r"$log(\sigma^2_f)$", r"$\sigma_e^2$"], truths=truths, truth_color='r', quantiles=[0.16, 0.84],
                     levels=(1-np.exp(-1./8),1-np.exp(-0.5),1-np.exp(-0.5*4),1-np.exp(-0.5*9)),
                     show_titles=True, fill_contours=True, plot_density=True,
                     scale_hist=False,space=0, 

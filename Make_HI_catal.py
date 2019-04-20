@@ -11,7 +11,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.table import Table, Column 
 
-
+### external codes
+from redTools import *
+from Kcorrect import *
+from linear_mcmc import *
 ########################################################### Begin
 inFile  = '../ADHI.csv'
 table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
@@ -492,8 +495,6 @@ myTable.add_column(Column(data=inc_n, name='inc_n'))
 myTable.add_column(Column(data=flag, name='flag', dtype=np.dtype(int)))
 myTable.add_column(Column(data=Sqlt, name='Sqlt', dtype=np.dtype(int)))
 myTable.add_column(Column(data=Wqlt, name='Wqlt', dtype=np.dtype(int)))
-
-
 myTable.write('ESN_HI_catal.csv', format='ascii.fixed_width',delimiter=',', bookend=False, overwrite=True) 
 
 #N = 0
@@ -516,6 +517,13 @@ myTable.write('ESN_HI_catal.csv', format='ascii.fixed_width',delimiter=',', book
 print alll, both, alf, adhi, cornel
 
 
+inFile  = 'ESN_HI_catal.csv'   # input catalog
+table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
+
+table = extinctionCorrect(table)
+table = Kcorrection(table)
+
+
 myTable = Table()
 myTable.add_column(Column(data=pgc_ESN, name='pgc'))
 myTable.add_column(Column(data=Name, name='Name'))
@@ -525,13 +533,24 @@ myTable.add_column(Column(data=logWimx, name='logWimx', format='%0.3f'))
 myTable.add_column(Column(data=logWimx_e, name='logWimx_e', format='%0.3f'))
 myTable.add_column(Column(data=m21, name='m21', format='%0.2f'))
 myTable.add_column(Column(data=m21_e, name='m21_e', format='%0.2f'))
-myTable.add_column(Column(data=u_mag, name='u'))
-myTable.add_column(Column(data=g_mag, name='g'))
-myTable.add_column(Column(data=r_mag, name='r'))
-myTable.add_column(Column(data=i_mag, name='i'))
-myTable.add_column(Column(data=z_mag, name='z'))
+myTable.add_column(Column(data=u_mag, name='u', format='%0.2f'))
+myTable.add_column(Column(data=g_mag, name='g', format='%0.2f'))
+myTable.add_column(Column(data=r_mag, name='r', format='%0.2f'))
+myTable.add_column(Column(data=i_mag, name='i', format='%0.2f'))
+myTable.add_column(Column(data=z_mag, name='z', format='%0.2f'))
 myTable.add_column(Column(data=w1_mag, name='w1'))
 myTable.add_column(Column(data=w2_mag, name='w2'))
 myTable.add_column(Column(data=inc, name='inc'))
 myTable.add_column(Column(data=inc_e, name='inc_e'))
+myTable.add_column(Column(data=R50_w1, name='R50_w1', format='%0.2f'))
+myTable.add_column(Column(data=R50_w2, name='R50_w2', format='%0.2f'))
+myTable.add_column(Column(data=C82_w2, name='C82_w2', format='%0.2f'))
+myTable.add_column(Column(data=Wba, name='Wba', format='%0.2f'))
+myTable.add_column(Column(data=table['u'], name='u_', format='%0.2f'))
+myTable.add_column(Column(data=table['g'], name='g_', format='%0.2f'))
+myTable.add_column(Column(data=table['r'], name='r_', format='%0.2f'))
+myTable.add_column(Column(data=table['i'], name='i_', format='%0.2f'))
+myTable.add_column(Column(data=table['z'], name='z_', format='%0.2f'))
+myTable.add_column(Column(data=table['w1'], name='w1_', format='%0.2f'))
+myTable.add_column(Column(data=table['w2'], name='w2_', format='%0.2f'))
 myTable.write('ESN_HI_catal_4paper.csv', format='ascii.fixed_width',delimiter=',', bookend=False, overwrite=True) 
