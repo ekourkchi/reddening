@@ -49,7 +49,7 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
     
     return z_scaler, pca_trafo
 ################################################################# 
-def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100]):
+def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], minWISEqual=4, minSDSSqual=4, clean=True):
     
     ###inFile  = 'ESN_HI_catal.csv'
     table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
@@ -63,17 +63,18 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100]):
     else: 
         text1 = band1+'-W2' 
         text2 = '$c21W_2$'
+    
+    if clean:
+        delta = np.abs(table[band2]-table[band2+'_'])
+        index, = np.where(delta<=0.15)
+        table = trim(table, index)
 
-    delta = np.abs(table[band2]-table[band2+'_'])
-    index, = np.where(delta<=0.15)
-    table = trim(table, index)
+        delta = np.abs(table[band1]-table[band1+'_'])
+        index, = np.where(delta<=0.15)
+        table = trim(table, index)
 
-    delta = np.abs(table[band1]-table[band1+'_'])
-    index, = np.where(delta<=0.15)
-    table = trim(table, index)
-
-    index, = np.where(table['Wba']>0.01)
-    table = trim(table, index)
+        index, = np.where(table['Wba']>0.01)
+        table = trim(table, index)
     
     index, = np.where(table['inc']>=inc_lim[0])
     table = trim(table, index)
@@ -104,10 +105,10 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100]):
     index, = np.where(table['r_w1']>-5)
     table = trim(table, index)
 
-    index, = np.where(table['Sqlt']>3)
+    index, = np.where(table['Sqlt']>=minSDSSqual)
     table = trim(table, index)
 
-    index, = np.where(table['Wqlt']>3)
+    index, = np.where(table['Wqlt']>=minWISEqual)
     table = trim(table, index)
     
     if faceOn:
@@ -360,6 +361,15 @@ def extinctionCorrect(table):
     table = myTable
     ### table is now a dictionary
     
+    
+    table['u000'] = copy.deepcopy(table['u'])
+    table['g000'] = copy.deepcopy(table['g'])
+    table['r000'] = copy.deepcopy(table['r'])
+    table['i000'] = copy.deepcopy(table['i'])
+    table['z000'] = copy.deepcopy(table['z'])
+    table['w100'] = copy.deepcopy(table['w1'])
+    table['w200'] = copy.deepcopy(table['w2'])
+        
     table['u']  -= extinction(table['ebv'], band='u', method='SF11')
     table['g']  -= extinction(table['ebv'], band='g', method='SF11')
     table['r']  -= extinction(table['ebv'], band='r', method='SF11')
@@ -536,7 +546,7 @@ def getReddening_params(band1='r', band2='w2'):
             c= 0.023
             d= 0.474
             alpha = 0.157
-            beta = -1.174
+            beta = -1.173
             gamma = 3.411
             Ealpha = 0.004
             Ebeta = 0.005             

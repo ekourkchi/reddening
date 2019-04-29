@@ -68,8 +68,47 @@ def linSimul(samples, xl, size=500, percentile=[16, 50, 84]):
  #################################################################
    
     
+################################################################# 
+def lnlike1D(theta, x, y, yerr):
+    m, b = theta
+    model = m * x + b
+    inv_sigma2 = 1.0/(yerr**2)
+    return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
+
+################################################################# 
+def lnprob1D(theta, x, y, yerr):
+    lp = lnprior(theta)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlike1D(theta, x, y, yerr)
+################################################################# 
+## nwalker: # of MCMC random walkers
+## nsteps: # the lenght of MCMC chain
+## ignore: how many first steps to ignore
+def linMC1D(x, y, yerr, nwalkers=100, nsteps=1000, ignore=100):
+
+    [m_guess, b_guess], cov  = np.polyfit(x,y, 1, w=1./yerr**2, cov=True, full = False)
+    #m_guess, b_guess = -8, 14
     
+    nll = lambda *args: -lnlike1D(*args)
+    # maximum likelihood
+    result = op.minimize(nll, [m_guess, b_guess], args=(x, y, yerr))
+    m_ml, b_ml = result["x"]
     
+    ndim = 2
+    pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob1D, args=(x, y, yerr))
+    sampler.run_mcmc(pos, nsteps)
+    samples = sampler.chain[:, ignore:, :].reshape((-1, ndim))
+    
+    m_mcmc, b_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0)))
+                             
+    return m_mcmc, b_mcmc, samples
+#################################################################
+
+
     
     
     
