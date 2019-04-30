@@ -794,7 +794,7 @@ def esn_RForest(table_tst, table_cvl, table_trn, features, output, \
     
     return regr, x_trn, y_trn, p_y_trn, x_cvl, y_cvl, p_y_cvl, x_tst, y_tst, p_y_tst
 #################################################################   
-def predictor(w2, table, regr, features, output, index=0):
+def predictor(w2, table, regr, features, output, index=0, alpha=1., beta=0.):
     
     outDict = {}
     
@@ -865,7 +865,7 @@ def predictor(w2, table, regr, features, output, index=0):
         
     
     x_t = np.asarray([inList])
-    y_t = regr.predict(x_t) 
+    y_t = alpha*regr.predict(x_t)+beta
     
     # guess - prediction
     delta = outDict[output]-y_t
