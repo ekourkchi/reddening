@@ -49,7 +49,7 @@ def transform(inFile, band1 = 'r', band2 = 'w2'):
     
     return z_scaler, pca_trafo
 ################################################################# 
-def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], minWISEqual=4, minSDSSqual=4, clean=True):
+def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], minWISEqual=4, minSDSSqual=4, clean=True, encoding=None):
     
     ###inFile  = 'ESN_HI_catal.csv'
     table   = np.genfromtxt(inFile , delimiter=',', filling_values=-1, names=True, dtype=None)
@@ -96,14 +96,15 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], m
     
     table['EC82'] = (5*np.sqrt(2.)/np.log(10))*(0.1/6./table['R50_'+band2])
 
-    index, = np.where(table['logWimx']>1)
-    table = trim(table, index)
+    if True:
+        index, = np.where(table['logWimx']>1)
+        table = trim(table, index)
 
-    index, = np.where(table['r_w1']<4)
-    table = trim(table, index)
+        index, = np.where(table['r_w1']<4)
+        table = trim(table, index)
 
-    index, = np.where(table['r_w1']>-5)
-    table = trim(table, index)
+        index, = np.where(table['r_w1']>-5)
+        table = trim(table, index)
 
     index, = np.where(table['Sqlt']>=minSDSSqual)
     table = trim(table, index)
@@ -448,12 +449,67 @@ def getBand(inFile, band1 = 'r', band2 = 'w2'):
     return Reddening, Input, [scaler, pca, AB, cov, rms, table]    
 
 ################################################################# 
-def redCorrect(inc, pc0, band1='r', band2='w2'):
+## Errs = [Epc0, Einc]
+def redCorrect(inc, pc0, band1='r', band2='w2', getGamma=False, getErrors=False, Errs=[0,0,0]):
     
-    a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+    if band1=='w2':
+        a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1='w1', band2=band2)
+        gamma = (a*pc0**3+b*pc0**2+c*pc0+d)
+        gamma = gamma/3.107
+    else:
+        a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+        gamma = (a*pc0**3+b*pc0**2+c*pc0+d)
     
-    return log_a_b(inc, 10**(-1.*theta))*(a*pc0**3+b*pc0**2+c*pc0+d)
+    try:
+        indx, = np.where(gamma<0)
+        gamma[indx]=0
+    except:
+        try:
+            if gamma<0: gamma=0
+        except:
+            pass
     
+    
+    q2 = 10**(-1.*theta)
+    F = log_a_b(inc, q2)
+    
+    Aj = F*gamma
+    
+    if getGamma:
+        return Aj, gamma
+    else:
+        return Aj
+
+###def getReddening(band1='r', band2='w2'):
+    
+    ###if band1=='w2':
+        ###a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1='w1', band2=band2)
+        ###gamma = (a*pc0**3+b*pc0**2+c*pc0+d)
+        ###d_gamma = np.abs((3*a*pc0**2+2*b*pc0+c)*Epc0)
+        ###gamma = gamma/3.107
+        ###d_gamma = gamma/3.107
+    ###else:
+        ###a,b,c,d, alpha, beta, theta, Ealpha, Ebeta = getReddening_params(band1=band1, band2=band2)
+        ###gamma = (a*pc0**3+b*pc0**2+c*pc0+d)
+        ###d_gamma = np.abs((3*a*pc0**2+2*b*pc0+c)*Epc0)
+    
+    ###indx, = np.where(gamma<0)
+    ###gamma[indx]=0
+    ###d_gamma[indx]=0
+
+    ###q2 = 10**(-1.*theta)
+    ###F = log_a_b(inc, q2)
+    ###dF2 = Elogab2(inc, q2, Einc)
+    ###dM2 = dF2*(a*pc0**3+b*pc0**2+c*pc0+d)**2+(F*(3*a*pc0**2+2*b*pc0+c)*Epc0)**2
+    
+    ###Aj_e2 = np.sqrt(dM2)
+    ###Aj = F*gamma
+    
+    ###Aj[indx]=0
+    ###Aj_e2[indx]=0
+    
+    
+    ###return Aj, Aj_e2, gamma, d_gamma
 ################################################################# 
 def getReddening_params_surfB(band1='r', band2='w2'):
     
@@ -658,13 +714,14 @@ def esn_shuffle(array, seed=0):
         random.shuffle(array)
         return array
 #################################################################   
-def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
+def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100, noTest=False, alreadyDICT=False):
     
     ### table is a structured array
-    myTable = {}
-    for name in table.dtype.names:
-        myTable[name] = table[name]
-    table = myTable
+    if not alreadyDICT:
+        myTable = {}
+        for name in table.dtype.names:
+            myTable[name] = table[name]
+        table = myTable
     ### table is now a dictionary (hash table)    
 
     ## u0, g0, r0, i0, z0 are already K-/extinction- corrected
@@ -690,6 +747,7 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['i0'] = i0
     table['z0'] = z0
     table['w10']= w1
+    table['w20']= w2
     
     ## Reddening corrections
     u  = u0-redCorrect(inc, pc0, band1='u', band2='w2')
@@ -698,7 +756,7 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     i  = i0-redCorrect(inc, pc0, band1='i', band2='w2')
     z  = z0-redCorrect(inc, pc0, band1='z', band2='w2')
     w1 = w1-redCorrect(inc, pc0, band1='w1', band2='w2')
-    
+    #w2 = w2-redCorrect(inc, pc0, band1='w2', band2='w2')
     
     table['u'] = u
     table['g'] = g
@@ -706,6 +764,7 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['i'] = i
     table['z'] = z
     table['w1']= w1
+    #table['w2']= w2
         
     table['c21w']  = m21-w2
     table['g_w2']  = g-w2
@@ -713,6 +772,10 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['i_w2']  = i-w2
     table['z_w2']  = z-w2
     table['w1_w2'] = w1-w2
+    table['g_w1']  = g-w1
+    table['r_w1']  = r-w1
+    table['i_w1']  = i-w1
+    table['z_w1']  = z-w1    
     table['u_g']   = u-g
     table['g_r']   = g-r
     table['r_i']   = r-i
@@ -720,6 +783,9 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table['i_z']   = i-z
     table['r_z']   = r-z
     table['g_z']   = g-z
+    
+    table['R50_w2p'] = halflight(table["R50_g"], table["R50_r"], table["R50_i"], table["R50_z"])
+    table['Wbap'] = ba(table["Sba"])
 
 
     data = {'$g-r$':g-r, '$r-i$':r-i, '$i-z$':i-z}
@@ -736,33 +802,39 @@ def prepareSamples(table, N_test=200, Seed_test=0, N_cross=200, Seed_cross=100):
     table["Cpc2"] = pca_data[:,1]
     table["Cpc3"] = pca_data[:,2]   
     
-    n = len(table['pgc'])
-    indices = np.arange(n)
-    indices = esn_shuffle(indices, seed=Seed_test)
-    table = trim(table, indices)
-    indices = np.arange(N_test)
-    table_tst = trim(table, indices)
-    indices = np.arange(N_test, n)
-    table_tmp = trim(table, indices)
+    if not noTest: 
+        
+        n = len(table['pgc'])
+        indices = np.arange(n)
+        indices = esn_shuffle(indices, seed=Seed_test)
+        table = trim(table, indices)
+        indices = np.arange(N_test)
+        table_tst = trim(table, indices)
+        indices = np.arange(N_test, n)
+        table_tmp = trim(table, indices)
 
 
-    n = len(table_tmp['pgc'])
-    indices = np.arange(n)
-    indices = esn_shuffle(indices, seed=Seed_cross)
-    table_tmp = trim(table_tmp, indices)
-    indices = np.arange(N_cross)
-    table_cvl = trim(table_tmp, indices)
-    indices = np.arange(N_cross, n)
-    table_trn = trim(table_tmp, indices)
-    
-    table_tst["scaler"] = z_scaler
-    table_cvl["scaler"] = z_scaler
-    table_trn["scaler"] = z_scaler
-    table_tst["Cpca"] = pca
-    table_cvl["Cpca"] = pca
-    table_trn["Cpca"] = pca
-   
-    return table_tst, table_cvl, table_trn
+        n = len(table_tmp['pgc'])
+        indices = np.arange(n)
+        indices = esn_shuffle(indices, seed=Seed_cross)
+        table_tmp = trim(table_tmp, indices)
+        indices = np.arange(N_cross)
+        table_cvl = trim(table_tmp, indices)
+        indices = np.arange(N_cross, n)
+        table_trn = trim(table_tmp, indices)
+        
+        table_tst["scaler"] = z_scaler
+        table_cvl["scaler"] = z_scaler
+        table_trn["scaler"] = z_scaler
+        table_tst["Cpca"] = pca
+        table_cvl["Cpca"] = pca
+        table_trn["Cpca"] = pca
+        
+        return table_tst, table_cvl, table_trn
+    else:
+        table["scaler"] = z_scaler
+        table["Cpca"] = pca
+        return table
 #################################################################   
 def ML_data(table, features, output):
     
@@ -794,15 +866,21 @@ def esn_RForest(table_tst, table_cvl, table_trn, features, output, \
     
     return regr, x_trn, y_trn, p_y_trn, x_cvl, y_cvl, p_y_cvl, x_tst, y_tst, p_y_tst
 #################################################################   
-def predictor(w2, table, regr, features, output, index=0, alpha=1., beta=0.):
+def predictor(w2, table, regr, features, output, index=0, m=0., b=0., useFullPredictions=False):
     
     outDict = {}
     
     M21 = table["m21"][index]
     M0  = table["logWimx"][index]
-    WBA = table["Wba"][index]
-    R50 = table["R50_w2"][index]
     INC = table["inc"][index]
+    
+    if useFullPredictions:
+        WBA = table["Wbap"][index]
+        R50 = table["R50_w2p"][index]
+    else:
+        WBA = table["Wba"][index]
+        R50 = table["R50_w2"][index]
+    
     
     u0 = table['u0'][index]
     g0 = table['g0'][index]
@@ -865,12 +943,12 @@ def predictor(w2, table, regr, features, output, index=0, alpha=1., beta=0.):
         
     
     x_t = np.asarray([inList])
-    y_t = alpha*regr.predict(x_t)+beta
+    y_t = (regr.predict(x_t)+b)/(1.-m)
     
     # guess - prediction
     delta = outDict[output]-y_t
-    
     return delta
+
 #################################################################      
 def solver(f, x1, x2, threshold=0.01, N_iter=0):
     
@@ -892,4 +970,49 @@ def solver(f, x1, x2, threshold=0.01, N_iter=0):
         x0+=d
         n+=2    
 #################################################################   
+def halflight(reg, rer, rei, rez):
+    m_g = 0.71 # slopes for halflight model
+    m_r = 0.76
+    m_i = 0.78
+    m_z = 0.82
 
+    b_g = 0.077 # y-intercepts for halflight model
+    b_r = 0.072
+    b_i = 0.069
+    b_z = 0.068
+    
+    N = len(reg)
+
+    W = np.ones(shape = (4,N))
+    W[0] = reg
+    W[1] = rer
+    W[2] = rei
+    W[3] = rez
+    prox = np.median(W.T,1)
+
+    W2 = np.zeros(N)     
+
+    
+    for ii in np.arange(N):
+        
+        if prox[ii] is None: prox[ii]=rez[ii]
+        if prox[ii] is None: prox[ii]=rei[ii]
+        if prox[ii] is None: prox[ii]=rer[ii]
+        if prox[ii] is None: prox[ii]=reg[ii]
+        if prox[ii] is None: prox[ii]=0
+        
+        if   np.abs(rez[ii]-prox[ii])<0.2: W2[ii] = m_z*rez[ii]+b_z
+        elif np.abs(rei[ii]-prox[ii])<0.2: W2[ii] = m_i*rei[ii]+b_i
+        elif np.abs(rer[ii]-prox[ii])<0.2: W2[ii] = m_r*rer[ii]+b_r
+        elif np.abs(reg[ii]-prox[ii])<0.2: W2[ii] = m_g*reg[ii]+b_g
+        else: W2[ii] = prox[ii]
+    
+    return W2
+        
+
+#################################################################
+def ba(Sba):
+    m_sba = 0.854 # slope for Wba vs Sba
+    b_sba = 0.124 # y-intercept for Wba vs Sba
+    return m_sba*Sba+b_sba
+#################################################################
