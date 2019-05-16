@@ -386,6 +386,17 @@ def extinctionCorrect(table):
     table['w1_']-= extinction(table['ebv'], band='w1', method='SF11')
     table['w2_']-= extinction(table['ebv'], band='w2', method='SF11')
     
+    
+    bands=['u','g','r','i','z','w1','w2','u_','g_','r_','i_','z_','w1_','w2_']
+    
+    
+    
+    for band in bands:
+        band_mag = table[band]
+        band_mag[np.where(band_mag<0)]=0
+        table[band] = band_mag
+    
+    
     return table
     
 ################################################################# 
