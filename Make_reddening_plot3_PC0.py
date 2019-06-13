@@ -137,9 +137,9 @@ def plot_array(inFile, scatter=False, binned=True, band2='w2'):
     ax.set_yticks([])
     ax.xaxis.set_ticks_position('none')
     ax.yaxis.set_ticks_position('none')    
-    ax.annotate(r'$A_{'+band2+'}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
+    ax.annotate(r'$A_{\lambda,'+band2.upper()+'}^{(i)} \/\/ [mag]$', (0.008,0.56), xycoords='figure fraction', size=16, color='black', rotation=90)
     
-    ax.annotate(r'$P_{1,'+band2+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
+    ax.annotate(r'$P_{1,'+band2.upper()+'}$', (0.52,0.02), xycoords='figure fraction', size=16, color='black')
     
     fig.savefig("A_"+band2+"_P0.png")
     plt.show()
