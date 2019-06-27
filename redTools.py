@@ -56,6 +56,8 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], m
 
     table = extinctionCorrect(table)
     table = Kcorrection(table)
+    
+    print len(table['pgc'])
 
     if band2=='w1':
         text1 = band1+'-W1'      # example: cr-W1
@@ -96,7 +98,7 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], m
     
     table['EC82'] = (5*np.sqrt(2.)/np.log(10))*(0.1/6./table['R50_'+band2])
 
-    if True:
+    if clean:
         index, = np.where(table['logWimx']>1)
         table = trim(table, index)
 
@@ -116,13 +118,15 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], m
         index, = np.where(table['flag']>0)
         table = trim(table, index)
 
-        index, = np.where(table['flag']<3)
+        index, = np.where(table['flag']<=3)
         table = trim(table, index)
 
     else: 
 
         index, = np.where(table['flag']==0)
         table = trim(table, index)
+    
+    print len(table['pgc'])
     
     return table
 ################################################################# 
