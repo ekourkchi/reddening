@@ -57,15 +57,7 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], m
     table = extinctionCorrect(table)
     table = Kcorrection(table)
     
-    print len(table['pgc'])
-
-    if band2=='w1':
-        text1 = band1+'-W1'      # example: cr-W1
-        text2 = '$c21W_1$'       # example: c21w
-    else: 
-        text1 = band1+'-W2' 
-        text2 = '$c21W_2$'
-    
+   
     if clean:
         delta = np.abs(table[band2]-table[band2+'_'])
         index, = np.where(delta<=0.15)
@@ -125,9 +117,7 @@ def getTable(inFile, band1 = 'r', band2 = 'w2', faceOn=False, inc_lim=[0,100], m
 
         index, = np.where(table['flag']==0)
         table = trim(table, index)
-    
-    print len(table['pgc'])
-    
+       
     return table
 ################################################################# 
 def Fdelta(B, X):
@@ -700,6 +690,16 @@ def george_params(band1='r'):
     
     return theta
 ################################################################# 
+def get_PC_W1(w1, m21, logWimx, Wba, R50_w1):
+    
+    we = 2.5*np.log10(2.*np.pi*(R50_w1*60)**2)-2.5*np.log10(Wba)
+    mu50 = w1+we
+    c21w = m21-w1
+    P0_W1 = 0.533*(logWimx-2.47)/0.18+0.595*(c21w-2.11)/1.17-0.602*(mu50-22.83)/1.37
+    
+    return logWimx, c21w, mu50, P0_W1
+
+
 ## p0 = 0.524
 ## p1 = 0.601
 ## p2 = -0.603
