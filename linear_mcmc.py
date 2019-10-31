@@ -28,10 +28,13 @@ def lnprob(theta, x, y, xerr, yerr):
 ## ignore: how many first steps to ignore
 def linMC(x, y, xerr, yerr, nwalkers=100, nsteps=1000, ignore=100):
 
-    [m_guess, b_guess], cov  = np.polyfit(x,y, 1, w=1./yerr**2, cov=True, full = False)
+    A, cov  = np.polyfit(x,y, 1, w=1./yerr**2, cov=True, full = False)
+    
+    m_guess = A[0]
+    b_guess = A[1]
     
     nll = lambda *args: -lnlike(*args)
-    # maximum likelihood
+    # maximum likelihood 
     result = op.minimize(nll, [m_guess, b_guess], args=(x, y, xerr, yerr))
     m_ml, b_ml = result["x"]
     
@@ -87,9 +90,12 @@ def lnprob1D(theta, x, y, yerr):
 ## ignore: how many first steps to ignore
 def linMC1D(x, y, yerr, nwalkers=100, nsteps=1000, ignore=100):
 
-    [m_guess, b_guess], cov  = np.polyfit(x,y, 1, w=1./yerr**2, cov=True, full = False)
+    A   = np.polyfit(x,y, 1, w=1./yerr**2, cov=False, full = False)
     #m_guess, b_guess = -8, 14
+    m_guess = A[0]
+    b_guess = A[1]
     
+        
     nll = lambda *args: -lnlike1D(*args)
     # maximum likelihood
     result = op.minimize(nll, [m_guess, b_guess], args=(x, y, yerr))
@@ -108,13 +114,106 @@ def linMC1D(x, y, yerr, nwalkers=100, nsteps=1000, ignore=100):
     return m_mcmc, b_mcmc, samples
 #################################################################
 
+################################################################# 
+def lnlikelikeS1(theta, x, y, xerr, yerr):
+    b = theta
+    model = x + b
+    inv_sigma2 = 1.0/(yerr**2 + (xerr)**2)
+    return -0.5*(np.sum((y-model)**2*inv_sigma2 - np.log(inv_sigma2)))
 
+################################################################# 
+def lnprobS1(theta, x, y, xerr, yerr):
+    lp = lnpriorS1(theta)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlikelikeS1(theta, x, y, xerr, yerr)
+
+
+def lnpriorS1(theta):
+    b = theta
+    if True:  # don't care (flat prior)
+        return 0.0
+    return -np.inf
+################################################################# 
+## nwalker: # of MCMC random walkers
+## nsteps: # the lenght of MCMC chain
+## ignore: how many first steps to ignore
+def linMCSlope1(x, y, xerr, yerr, nwalkers=100, nsteps=1000, ignore=100):
+
+    A, cov  = np.polyfit(x,y, 1, w=1./yerr**2, cov=True, full = False)
+    
+    b_guess = A[0]
+    
+    nll = lambda *args: -lnlikelikeS1(*args)
+    # maximum likelihood
+    result = op.minimize(nll, [b_guess], args=(x, y, xerr, yerr))
+    b_ml = result["x"]
+    
+    ndim = 1
+    pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprobS1, args=(x, y, xerr, yerr))
+    sampler.run_mcmc(pos, nsteps)
+    samples = sampler.chain[:, ignore:, :].reshape((-1, ndim))
+    
+    b_mcmc = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0)))
+                             
+    return b_mcmc, samples
+#################################################################
     
     
     
     
+################################################################# 
+def lnlike_H0(theta, mu, V, mu_err, V_err):
+    H0 = theta
+    
+    D = 10**((mu-25.)/5.)
+    
+    model = H0 * D
+    d_model = H0 * D * (np.log(10)/5.) * mu_err
+    
+    inv_sigma2 = 1.0/(V_err**2 + (d_model)**2)
+    return -0.5*(np.sum((V-model)**2*inv_sigma2 - np.log(inv_sigma2)))
+
+################################################################# 
+def lnprior_H0(theta):
+    H0 = theta
+    if True:  # don't care (flat prior)
+        return 0.0
+    return -np.inf
+################################################################# 
+def lnprob_H0(theta, x, y, xerr, yerr):
+    lp = lnprior_H0(theta)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlike_H0(theta, x, y, xerr, yerr)
+################################################################# 
+## nwalker: # of MCMC random walkers
+## nsteps: # the lenght of MCMC chain
+## ignore: how many first steps to ignore
+def linMC_H0(mu, V, mu_err, V_err, nwalkers=100, nsteps=1000, ignore=100):
     
     
+    H0 = 68.
+    
+    nll = lambda *args: -lnlike_H0(*args)
+    # maximum likelihood 
+    result = op.minimize(nll, [H0], args=(mu, V, mu_err, V_err))
+    
+    ndim = 1
+    pos = [result["x"] + 1e-4*np.random.randn(ndim) for i in range(nwalkers)]
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_H0, args=(mu, V, mu_err, V_err))
+    sampler.run_mcmc(pos, nsteps)
+    samples = sampler.chain[:, ignore:, :].reshape((-1, ndim))
+    
+    H0 = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                             zip(*np.percentile(samples, [16, 50, 84],
+                                                axis=0)))
+                             
+    return H0, samples
+#################################################################    
     
     
     

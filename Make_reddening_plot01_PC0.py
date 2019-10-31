@@ -237,5 +237,5 @@ plt.setp(ax.get_yticklabels(), visible=False)
 
 #
 #plt.savefig('color_pc0_w2.eps', dpi=600)
-plt.savefig('color_pc0_w2_50-60.eps', dpi=600)
+plt.savefig('color_pc0_w2_50-60.png')
 plt.show()

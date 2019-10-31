@@ -326,4 +326,4 @@ y0 = 0.2*Ylm[0]+0.8*Ylm[1]
 plt.errorbar([x0], [y0], xerr=[np.median(Er_w1)], yerr=[np.median(EC82)], color='k', fmt='o', alpha=0.7, capsize=3, markersize=5)
 
 #plt.show()
-plt.savefig('r_w2_features_Fon.eps')
+plt.savefig('r_w2_features_Fon.png')

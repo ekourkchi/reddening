@@ -167,5 +167,5 @@ plt.plot(xfit, yfit, '--', color='blue')
 
 print myoutput.beta
 
-plt.savefig('deviation_c21w2.eps', dpi=600)
+plt.savefig('deviation_c21w2.png')
 plt.show()
