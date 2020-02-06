@@ -23,6 +23,8 @@ from collections import OrderedDict
 import random
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import make_regression
+import xgboost as xgb 
+
 
 from Kcorrect import *
 ################################################################# 
@@ -872,7 +874,13 @@ def esn_RForest(table_tst, table_cvl, table_trn, features, output, \
 
     regr = RandomForestRegressor(max_depth=max_depth, n_estimators=n_estimators, \
         max_features=max_features, min_samples_leaf=min_samples_leaf, \
-            bootstrap=bootstrap)
+            bootstrap=bootstrap, min_samples_split=2)
+    
+    #regr = xgb.XGBRegressor(max_depth=max_depth, n_estimators=n_estimators, \
+        #max_features=max_features, min_samples_leaf=min_samples_leaf, \
+            #bootstrap=bootstrap, learning_rate=0.05)
+    
+    
 
     regr.fit(x_trn, y_trn)
     p_y_trn  = regr.predict(x_trn)
